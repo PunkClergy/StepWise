@@ -79,11 +79,16 @@ export default {
 
 	// 所有业务方法集合
 	methods: {
+		// 预览奖励图片
+		previewRewardImage() {
+		  uni.previewImage({
+		    urls: [this.rewardText], // 要预览的图片数组
+		    current: 0 // 默认显示第0张
+		  });
+		},
 		// 自动聚焦输入框方法：确保切换题目后可直接输入
 		focusInput() {
-			// 等待DOM更新完成后执行
-			uni.nextTick(() => {
-				// 判断输入框存在且不在倒计时中，执行聚焦
+			this.$nextTick(() => {
 				if (this.$refs.inputBox && !this.isCountDown) {
 					this.$refs.inputBox.focus();
 				}
@@ -95,18 +100,19 @@ export default {
 		 * 规则：加法和不超100，减法结果不为负数
 		 */
 		genQuestion() {
+			// 此处的30代表着30以内的加减法  可以更换为50  100
 			let a, b, op; // 定义运算数a、b和运算符op
 			const isAdd = Math.random() > 0.5; // 随机生成加减法，50%概率
 
 			// 加法逻辑：两数之和不超过100
 			if (isAdd) {
-				a = Math.floor(Math.random() * 50) + 1; // 生成1-50随机数
-				b = Math.floor(Math.random() * (100 - a)) + 1; // 保证a+b≤100
+				a = Math.floor(Math.random() * 30) + 1; // 生成1-50随机数
+				b = Math.floor(Math.random() * (30 - a)) + 1; // 保证a+b≤100
 				op = "+"; // 赋值运算符为+
 				this.answer = a + b; // 计算正确答案
 			} else {
 				// 减法逻辑：结果不为负数
-				a = Math.floor(Math.random() * 100) + 1; // 生成1-100随机数
+				a = Math.floor(Math.random() * 30) + 1; // 生成1-100随机数
 				b = Math.floor(Math.random() * a) + 1; // 保证b≤a，结果非负
 				op = "-"; // 赋值运算符为-
 				this.answer = a - b; // 计算正确答案
@@ -228,7 +234,7 @@ export default {
 		 */
 		showResult() {
 			this.showModal = true; // 打开结算弹窗
-			this.pass = this.score >= 10; // 判断是否通关（80分改为10分测试用）
+			this.pass = this.score >= 80; // 判断是否通关
 			this.modalTitle = this.pass ? "🎉 恭喜通关！" : "💪 继续加油！"; // 设置弹窗标题
 			// 通关则随机获取一个奖励图标
 			if (this.pass) {

@@ -25,7 +25,8 @@
 			<!-- 输入框容器：包裹答案输入区域 -->
 			<view class="input-wrap">
 				<!-- 答案输入框：数字类型，双向绑定用户答案，倒计时期间禁用 -->
-				<input v-model="userAns" type="number" class="answer-input" placeholder="?" :disabled="isCountDown" />
+				<input ref="inputBox" v-model="userAns" type="number" class="answer-input" placeholder="?"
+					:disabled="isCountDown" />
 			</view>
 
 			<!-- 按钮容器：提交答案按钮 -->
@@ -98,7 +99,7 @@
 
 				<!-- 通关奖励盒子：通关时显示奖励图标 -->
 				<view class="reward-box" v-if="pass">
-					<image class="reward-img" :src="rewardText" mode="widthFix"></image>
+					<image class="reward-img" :src="rewardText" mode="widthFix" @click="previewRewardImage"></image>
 				</view>
 				<!-- 未通关提示：未通关时显示沮丧表情 -->
 				<view class="no-pass" v-else>
@@ -114,13 +115,9 @@
 	</view>
 </template>
 
-<!-- 脚本区域：引入外部业务逻辑文件 -->
 <script>
-	// 导入index.js中的逻辑对象
 	import script from './index.js'
-	// 导出逻辑，供页面使用
 	export default script
 </script>
 
-<!-- 样式区域：引入外部CSS样式文件 -->
 <style src="./index.css"></style>
