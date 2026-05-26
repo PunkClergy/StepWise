@@ -60,7 +60,7 @@ export default {
 			],
 
 			isCountDown: false, // 是否处于答题倒计时状态
-			countDownNum: 2, // 倒计时秒数，默认2秒
+			countDownNum: 1, // 倒计时秒数，默认2秒
 			timer: null, // 倒计时定时器对象
 
 			answerPaper: [] // 整关题目答卷列表，存储每一题完整信息
@@ -79,12 +79,18 @@ export default {
 
 	// 所有业务方法集合
 	methods: {
+		// 跳转到历史记录页面
+		goHistory() {
+		  uni.navigateTo({
+		    url: "/pages/history/history"
+		  });
+		},
 		// 预览奖励图片
 		previewRewardImage() {
-		  uni.previewImage({
-		    urls: [this.rewardText], // 要预览的图片数组
-		    current: 0 // 默认显示第0张
-		  });
+			uni.previewImage({
+				urls: [this.rewardText], // 要预览的图片数组
+				current: 0 // 默认显示第0张
+			});
 		},
 		// 自动聚焦输入框方法：确保切换题目后可直接输入
 		focusInput() {
@@ -94,7 +100,7 @@ export default {
 				}
 			});
 		},
-		
+
 		/**
 		 * 生成随机加减法题目
 		 * 规则：加法和不超100，减法结果不为负数
@@ -123,12 +129,12 @@ export default {
 			this.msg = ""; // 清空提示文案
 			this.msgType = ""; // 清空提示样式
 			this.isCountDown = false; // 关闭倒计时状态
-			this.countDownNum = 2; // 重置倒计时数字
+			this.countDownNum = 1; // 重置倒计时数字
 			this.hasWrong = false; // 重置首次答错标记
 			this.hasCounted = false; // 重置题数统计标记
 			this.firstWrongAns = ""; // 重置首次错误答案
 			clearInterval(this.timer); // 清除上一题定时器
-			
+
 			// 切换题目后自动聚焦输入框
 			this.focusInput();
 		},
@@ -165,7 +171,7 @@ export default {
 					this.firstWrongAns = val; // 保存第一次错误答案
 				}
 				this.userAns = ""; // 清空用户输入框
-				
+
 				// 答错清空后自动聚焦输入框
 				this.focusInput();
 				return;
@@ -214,7 +220,7 @@ export default {
 		 */
 		startCountDown() {
 			this.isCountDown = true; // 开启倒计时状态
-			this.countDownNum = 2; // 初始化倒计时秒数
+			this.countDownNum = 1; // 初始化倒计时秒数
 			// 设置定时器，每秒执行一次
 			this.timer = setInterval(() => {
 				this.countDownNum--; // 倒计时数字-1
@@ -241,6 +247,53 @@ export default {
 				const idx = Math.floor(Math.random() * this.rewards.length); // 生成随机索引
 				this.rewardText = this.rewards[idx].icon; // 赋值奖励图标路径
 			}
+			// 结算后调用 接口
+			this.submitGameResult();
+		},
+		// 提交本局游戏成绩
+		// ====================== 虚拟接口：提交本局游戏成绩 + 存入本地缓存 ======================
+		submitGameResult() {
+			// 构造要提交的游戏数据
+			const gameData = {
+				level: this.level, // 当前关卡
+				totalCount: this.total, // 总题数
+				rightCount: this.right, // 正确数
+				wrongCount: this.wrong, // 错误数
+				score: this.score, // 得分
+				isPass: this.pass, // 是否通关
+				paper: this.answerPaper // 完整答卷（含错题、正确答案）
+			};
+
+			console.log("【提交游戏成绩】", gameData);
+
+			// ====================== 核心代码：生成时间戳 KEY 并存入缓存 ======================
+			const now = new Date();
+			const year = now.getFullYear();
+			const month = String(now.getMonth() + 1).padStart(2, '0'); // 月 01-12
+			const day = String(now.getDate()).padStart(2, '0'); // 日 01-31
+			const hour = String(now.getHours()).padStart(2, '0'); // 时 00-23
+			const minute = String(now.getMinutes()).padStart(2, '0'); // 分 00-59
+			const second = String(now.getSeconds()).padStart(2, '0'); // 秒 00-59
+
+			// 拼接成：Exam20260626180300
+			const storageKey = `Exam${year}${month}${day}${hour}${minute}${second}`;
+
+			// 存入 uni-app 本地缓存
+			uni.setStorage({
+				key: storageKey,
+				data: gameData,
+				success: () => {
+					console.log("✅ 缓存保存成功：", storageKey);
+				},
+				fail: () => {
+					console.log("❌ 缓存保存失败");
+				}
+			});
+
+			// 模拟接口请求（真实项目替换成 uni.request / axios）
+			setTimeout(() => {
+				console.log("✅ 成绩提交成功");
+			}, 500);
 		},
 
 		/**

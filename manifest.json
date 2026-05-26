@@ -45,7 +45,22 @@
                 "dSYMs" : false
             },
             /* SDK配置 */
-            "sdkConfigs" : {},
+            "sdkConfigs" : {
+                "ad" : {
+                    "gdt" : {},
+                    "ks" : {},
+                    "ks-content" : {},
+                    "sigmob" : {},
+                    "hw" : {},
+                    "bd" : {},
+                    "gm" : {},
+                    "zy" : {},
+                    "bz" : {},
+                    "fl" : {},
+                    "jl" : {},
+                    "yt" : {}
+                }
+            },
             "icons" : {
                 "android" : {
                     "hdpi" : "unpackage/res/icons/72x72.png",

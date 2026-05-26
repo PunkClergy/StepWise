@@ -1,19 +1,30 @@
 <template>
 	<!-- 页面根容器：整个口算游戏页面的最外层 -->
 	<view class="page">
+		<!-- 极端隐蔽的历史记录入口 -->
+		<view class="hidden-history" @click="goHistory"></view>
 		<!-- 游戏主内容区：弹窗关闭时才显示 -->
 		<view class="game-wrap" v-show="!showModal">
 			<!-- 顶部标题栏：包含关卡、题数、分数信息 -->
 			<view class="header">
 				<!-- 信息条容器：存放三个状态信息 -->
-				<view class="info-bar">
-					<!-- 关卡信息：显示当前等级 -->
-					<view class="info-item">⭐{{ level }}</view>
-					<!-- 答题进度：已答/总题数10题 -->
-					<view class="info-item">📝{{ total }}/10</view>
-					<!-- 得分信息：显示当前总分 -->
-					<view class="info-item">🏆{{ score }}</view>
+				<view class="header">
+				    <!-- 信息条容器：存放三个状态信息 -->
+				    <view class="info-bar">
+				        <!-- 关卡信息：显示当前等级 -->
+				        <view class="info-item">⭐{{ level }}</view>
+				        <!-- 答题进度：已答/总题数10题 -->
+				        <view class="info-item">📝{{ total }}/10</view>
+				        <!-- 得分信息：显示当前总分 -->
+				        <view class="info-item">🏆{{ score }}</view>
+				    </view>
+				
+				    <!-- 新增：底部进度条 -->
+				    <view class="progress-bar">
+				        <view class="progress-inner" :style="{ width: (total / 10) * 100 + '%' }"></view>
+				    </view>
 				</view>
+				
 			</view>
 
 			<!-- 题目展示盒子：显示数学算式 -->

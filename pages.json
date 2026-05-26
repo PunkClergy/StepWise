@@ -6,6 +6,12 @@
 				"navigationBarTitleText": "🧮",
 				"navigationBarBackgroundColor": "#E8EDE4"
 			}
+		},
+		{
+			"path": "pages/history/history",
+			"style": {
+				"navigationBarTitleText": "历史答题记录"
+			}
 		}
 	],
 	"globalStyle": {
