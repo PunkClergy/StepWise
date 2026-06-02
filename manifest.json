@@ -46,20 +46,7 @@
             },
             /* SDK配置 */
             "sdkConfigs" : {
-                "ad" : {
-                    "gdt" : {},
-                    "ks" : {},
-                    "ks-content" : {},
-                    "sigmob" : {},
-                    "hw" : {},
-                    "bd" : {},
-                    "gm" : {},
-                    "zy" : {},
-                    "bz" : {},
-                    "fl" : {},
-                    "jl" : {},
-                    "yt" : {}
-                }
+                "ad" : {}
             },
             "icons" : {
                 "android" : {
