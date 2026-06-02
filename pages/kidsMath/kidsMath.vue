@@ -407,8 +407,7 @@
 						title: "太棒啦！",
 						content: `你真厉害！\n当前正确率：${this.rateText}`,
 						confirmText: "下一题",
-						cancelText: "再看一遍",
-						showCancel: true,
+						showCancel: false, // 这里改成 false，隐藏“再看一遍”按钮
 						confirm: this.createNewQuestion
 					});
 				} else {
