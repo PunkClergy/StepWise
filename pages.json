@@ -15,16 +15,16 @@
 		{
 			"path": "pages/kidsMath/kidsMath",
 			"style": {
-				"navigationBarTitleText": "10以内加减法",
-				"navigationBarBackgroundColor": "#fff9e6",
-				"navigationStyle": "custom"
+				"navigationBarBackgroundColor": "#fff9e6"
 			}
 		},
 		{
-			"path": "pages/history/history",
-			"style": {
-				"navigationBarTitleText": "历史答题记录"
-			}
+			"path": "pages/kidsEnglish/kidsEnglish"
+		
+		},
+		{
+			"path": "pages/history/history"
+			
 		}
 	],
 	"globalStyle": {

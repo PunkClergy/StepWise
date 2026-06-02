@@ -67,7 +67,6 @@
 		methods: {
 			// 口算：存入缓存后跳转配置页
 			goMath() {
-				console.log(123)
 				uni.setStorageSync('currentSubject', 'math');
 				uni.navigateTo({
 					url: "/pages/mathConfig/mathConfig"
@@ -90,8 +89,8 @@
 			// 英语
 			goEnglish() {
 				uni.setStorageSync('currentSubject', 'english');
-				uni.showToast({
-					title: "英语功能开发中"
+				uni.navigateTo({
+					url: "/pages/kidsEnglish/kidsEnglish"
 				});
 			}
 		}
