@@ -1,67 +1,41 @@
 <template>
-	<!-- 历史答题记录页面 -->
-	<view class="history-page">
-
-		<!-- 直接使用 Picker 日期选择（纯净版，无报错） -->
-		<view class="search-box">
-			<picker mode="date" @change="dateChange">
-				<view class="picker-text">
-					{{ searchDate || "选择日期搜索" }}
+	<view class="error-book-page">
+		<!-- 顶部：标题 + 日期 左右布局 -->
+		<view class="header">
+			<text class="title">📕 错题本</text>
+			
+			<!-- 单个醒目日期选择框 选完自动搜索 -->
+			<picker mode="date" :value="selectDate" @change="onDateChange">
+				<view class="strong-picker">
+					{{ selectDate || '选择日期' }}
 				</view>
 			</picker>
 		</view>
 
-		<!-- 工具栏 -->
-		<view class="tool-bar">
-			<text>共 {{ totalCount }} 条记录</text>
-			<text class="clear-all-btn" @click="clearAll">清空</text>
+		<!-- 空状态 -->
+		<view class="empty-box" v-if="filteredList.length === 0">
+			<text class="empty-text">暂无错题 🎉</text>
+			<text class="empty-desc">继续加油哦！</text>
 		</view>
 
-		<!-- 空数据提示 -->
-		<view class="empty" v-if="showList.length === 0">
-			暂无答题记录
-		</view>
-
-		<!-- 考试记录列表 长按删除 单击查看试卷 -->
-		<view class="item" v-for="(item, index) in showList" :key="index" @click="openPaper(item)"
-			@longpress="longPressDel(item)">
-			<view class="title">{{ item.createTime }}</view>
-			<view class="info">
-				<text>总分：{{ item.score }} 分</text>
-				<text>正确：{{ item.rightCount }} 题</text>
-				<text>错误：{{ item.wrongCount }} 题</text>
+		<!-- 错题列表（滚动加载） -->
+		<scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" v-else>
+			<view class="item" v-for="(item, index) in showList" :key="index">
+				<view class="time">{{ item.time }}</view>
+				<view class="question">{{ item.question }}</view>
+				<view class="answer-row wrong">
+					<text>❌ 你的答案：{{ item.userAnswer }}</text>
+				</view>
+				<view class="answer-row right">
+					<text>✅ 正确答案：{{ item.rightAnswer }}</text>
+				</view>
 			</view>
-			<view class="status" :class="item.isPass ? 'pass' : 'fail'">
-				{{ item.isPass ? '通关' : '未通关' }}
+
+			<!-- 加载提示 -->
+			<view class="load-tip" v-if="hasMore">
+				<text>加载中...</text>
 			</view>
-		</view>
-
-		<!-- 分页加载更多 -->
-		<view class="load-more" v-if="hasMore" @click="loadMore">
-			加载更多
-		</view>
-
-		<!-- 试卷详情弹窗 -->
-		<view class="modal" v-if="showPaper" @click="showPaper = false">
-			<view class="modal-content" @click.stop>
-				<view class="modal-title">试卷详情</view>
-
-				<scroll-view scroll-y class="paper-list">
-					<view class="q-item" v-for="(q, i) in currentPaper" :key="i">
-						<view class="q-text">{{ q.question }}</view>
-						<view class="q-ans">正确答案：{{ q.realAnswer }}</view>
-						<view class="q-wrong" v-if="q.firstWrongAnswer">
-							第一次答错：{{ q.firstWrongAnswer }}
-						</view>
-						<view class="q-state" :class="q.isRight ? 'right' : 'wrong'">
-							{{ q.isRight ? '回答正确' : '回答错误' }}
-						</view>
-					</view>
-				</scroll-view>
-
-				<view class="close" @click="showPaper = false">关闭</view>
-			</view>
-		</view>
+		</scroll-view>
 	</view>
 </template>
 
@@ -70,314 +44,201 @@
 		data() {
 			return {
 				list: [],
-				filterList: [],
+				uniqueList: [],
+				filteredList: [],
 				showList: [],
-				showPaper: false,
-				currentPaper: [],
-				searchDate: "",
-				pageSize: 20,
+				pageSize: 5,
 				currentPage: 1,
-				totalCount: 0,
-				hasMore: false
+				hasMore: false,
+				selectDate: ''
 			};
 		},
 		onShow() {
-			this.loadHistory();
+			this.loadErrorList();
 		},
 		methods: {
-			// 日期选择改变
-			dateChange(e) {
-				this.searchDate = e.detail.value;
-				this.doSearch();
-			},
+			loadErrorList() {
+				try {
+					const data = uni.getStorageSync("math_error_questions") || [];
+					this.list = data;
 
-			// 加载所有缓存
-			loadHistory() {
-				uni.getStorageInfo({
-					success: (res) => {
-						let arr = [];
-						res.keys.forEach(key => {
-							if (key.startsWith('Exam')) {
-								let data = uni.getStorageSync(key);
-								let timeStr = key.replace('Exam', '');
-								let timeText = this.formatTimeStr(timeStr);
-								arr.unshift({
-									...data,
-									key,
-									createTime: timeText
-								});
-							}
-						});
-						this.list = arr;
-						this.filterList = arr;
-						this.totalCount = arr.length;
-						this.doPage();
+					const map = {};
+					const uniqueArr = [];
+					for (let i = this.list.length - 1; i >= 0; i--) {
+						const item = this.list[i];
+						if (!map[item.question]) {
+							map[item.question] = true;
+							uniqueArr.push(item);
+						}
 					}
-				});
-			},
-
-			// 日期搜索
-			doSearch() {
-				if (!this.searchDate) {
-					this.filterList = [...this.list];
-				} else {
-					this.filterList = this.list.filter(item =>
-						item.createTime.startsWith(this.searchDate)
-					);
+					this.uniqueList = uniqueArr.reverse();
+					this.filteredList = [...this.uniqueList];
+					this.resetScroll();
+				} catch (e) {
+					this.uniqueList = [];
+					this.filteredList = [];
+					this.resetScroll();
 				}
+			},
+
+			onDateChange(e) {
+				this.selectDate = e.detail.value;
+				this.searchByDate();
+			},
+
+			searchByDate() {
+				if (!this.selectDate) {
+					this.filteredList = [...this.uniqueList];
+					this.resetScroll();
+					return;
+				}
+
+				const targetDate = this.selectDate;
+				this.filteredList = this.uniqueList.filter(item => {
+					return item.time.startsWith(targetDate);
+				});
+
+				this.resetScroll();
+			},
+
+			resetScroll() {
 				this.currentPage = 1;
-				this.doPage();
+				this.showList = [];
+				this.loadData();
 			},
 
-			// 分页处理
-			doPage() {
-				this.totalCount = this.filterList.length;
-				let start = 0;
-				let end = this.pageSize;
-				this.showList = this.filterList.slice(start, end);
-				this.hasMore = this.filterList.length > this.pageSize;
+			loadData() {
+				const start = 0;
+				const end = this.currentPage * this.pageSize;
+				const tempList = this.filteredList.slice(start, end);
+				this.showList = tempList;
+				this.hasMore = this.showList.length < this.filteredList.length;
 			},
 
-			// 加载更多
 			loadMore() {
+				if (!this.hasMore) return;
 				this.currentPage++;
-				let start = (this.currentPage - 1) * this.pageSize;
-				let end = this.currentPage * this.pageSize;
-				let addList = this.filterList.slice(start, end);
-				this.showList = [...this.showList, ...addList];
-				this.hasMore = this.filterList.length > end;
+				this.loadData();
 			},
 
-			// 长按删除
-			longPressDel(item) {
-				uni.vibrateShort();
+			clearAllError() {
 				uni.showModal({
-					title: "删除确认",
-					content: "确定删除这条记录？",
+					title: "确认清空",
+					content: "确定要清空所有错题吗？清空后无法恢复！",
 					success: (res) => {
 						if (res.confirm) {
-							uni.removeStorageSync(item.key);
-							this.loadHistory();
+							try {
+								uni.removeStorageSync("math_error_questions");
+								this.list = [];
+								this.uniqueList = [];
+								this.filteredList = [];
+								this.showList = [];
+								uni.showToast({ title: "清空成功" });
+							} catch (e) {}
 						}
 					}
 				});
-			},
-
-			// 清空全部
-			clearAll() {
-				uni.showModal({
-					title: "警告",
-					content: "确定清空所有答题记录？不可恢复！",
-					success: (res) => {
-						if (res.confirm) {
-							uni.getStorageInfo({
-								success: (info) => {
-									info.keys.forEach(k => {
-										if (k.startsWith("Exam")) {
-											uni.removeStorageSync(k);
-										}
-									});
-									this.list = [];
-									this.filterList = [];
-									this.showList = [];
-									this.totalCount = 0;
-									uni.showToast({
-										title: "清空成功"
-									});
-								}
-							});
-						}
-					}
-				});
-			},
-
-			// 时间格式化
-			formatTimeStr(str) {
-				return str.replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5:$6');
-			},
-
-			// 打开试卷
-			openPaper(item) {
-				this.currentPaper = item.paper;
-				this.showPaper = true;
 			}
 		}
 	};
 </script>
 
 <style scoped>
-	.history-page {
-		padding: 20rpx;
-		background: #f5f5f5;
+	.error-book-page {
+		background: linear-gradient(180deg, #fff9e6 0%, #fffdf5 100%);
 		min-height: 100vh;
+		padding: 20rpx;
+		box-sizing: border-box;
 	}
 
-	/* Picker 日期搜索样式 */
-	.search-box {
-		background: #fff;
-		border-radius: 12rpx;
-		padding: 0 20rpx;
-		margin-bottom: 20rpx;
-		height: 70rpx;
-		display: flex;
-		align-items: center;
-	}
-
-	.search-box picker {
-		width: 100%;
-	}
-
-	.picker-text {
-		font-size: 26rpx;
-		color: #333;
-	}
-
-	/* 工具栏 */
-	.tool-bar {
+	/* 左右布局核心 */
+	.header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 20rpx;
+		padding: 50rpx 10rpx;
+		margin-bottom: 10rpx;
+	}
+
+	.title {
+		font-size: 46rpx;
+		font-weight: bold;
+		color: #5c3a21;
+	}
+
+	/* 日期样式醒目 */
+	.strong-picker {
+		padding: 12rpx 20rpx;
+		background: linear-gradient(90deg, #ffebf0, #ffe0e0);
+		border: 3rpx solid #ff6b6b;
+		border-radius: 20rpx;
 		font-size: 26rpx;
-		color: #666;
-	}
-
-	.clear-all-btn {
-		font-size: 24rpx;
-		color: #fff;
-		background: #ff3b30;
-		border: none;
-		padding: 8rpx 16rpx;
-		border-radius: 8rpx;
-	}
-
-	.empty {
+		font-weight: bold;
+		color: #ff4444;
 		text-align: center;
-		padding: 200rpx 0;
+		white-space: nowrap;
+	}
+
+	/* 空状态 */
+	.empty-box {
+		text-align: center;
+		padding-top: 150rpx;
+	}
+
+	.empty-text {
+		display: block;
+		font-size: 36rpx;
 		color: #999;
-		font-size: 30rpx;
+		margin-bottom: 20rpx;
+	}
+
+	.empty-desc {
+		font-size: 28rpx;
+		color: #ccc;
+	}
+
+	/* 去掉底部多余间距 */
+	.list-scroll {
+		height: calc(100vh - 200rpx);
 	}
 
 	.item {
 		background: #fff;
-		border-radius: 16rpx;
+		border-radius: 30rpx;
 		padding: 30rpx;
 		margin-bottom: 20rpx;
-		position: relative;
+		box-shadow: 0 6rpx 15rpx rgba(255, 200, 200, 0.1);
 	}
 
-	.title {
-		font-size: 32rpx;
-		font-weight: bold;
-		margin-bottom: 10rpx;
-	}
-
-	.info {
-		font-size: 26rpx;
-		color: #666;
-		display: flex;
-		gap: 20rpx;
-	}
-
-	.status {
-		position: absolute;
-		right: 0rpx;
-		top: 30rpx;
-		padding: 8rpx 16rpx;
-		border-radius: 8rpx;
+	.time {
 		font-size: 24rpx;
+		color: #999;
+		margin-bottom: 15rpx;
 	}
 
-	.pass {
-		color: #4cd964;
-	}
-
-	.fail {
-		color: #ff3b30;
-	}
-
-	/* 加载更多 */
-	.load-more {
-		text-align: center;
-		padding: 20rpx;
-		color: #007aff;
-		font-size: 26rpx;
-	}
-
-	/* 弹窗 */
-	.modal {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.6);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 999;
-	}
-
-	.modal-content {
-		width: 90%;
-		background: #fff;
-		border-radius: 20rpx;
-		padding: 40rpx;
-		max-height: 80vh;
-	}
-
-	.modal-title {
-		text-align: center;
-		font-size: 36rpx;
+	.question {
+		font-size: 44rpx;
 		font-weight: bold;
-		margin-bottom: 20rpx;
+		color: #5c3a21;
+		margin-bottom: 25rpx;
 	}
 
-	.paper-list {
-		max-height: 60vh;
-	}
-
-	.q-item {
-		padding: 20rpx;
-		border-bottom: 1rpx solid #eee;
-	}
-
-	.q-text {
+	.answer-row {
 		font-size: 30rpx;
-		font-weight: bold;
+		margin-bottom: 15rpx;
 	}
 
-	.q-ans {
-		color: #007aff;
-		font-size: 26rpx;
-		margin-top: 6rpx;
-	}
-
-	.q-wrong {
-		color: #ff3b30;
-		font-size: 26rpx;
-		margin-top: 6rpx;
-	}
-
-	.q-state {
-		margin-top: 10rpx;
-		font-size: 26rpx;
+	.wrong {
+		color: #ff6b6b;
 	}
 
 	.right {
 		color: #4cd964;
 	}
 
-	.wrong {
-		color: #ff3b30;
-	}
-
-	.close {
-		background: #007aff;
-		color: #fff;
+	.load-tip {
 		text-align: center;
-		padding: 20rpx;
-		border-radius: 12rpx;
-		margin-top: 20rpx;
+		padding: 15rpx;
+		color: #999;
 	}
 </style>

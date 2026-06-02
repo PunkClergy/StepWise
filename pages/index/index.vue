@@ -1,134 +1,234 @@
 <template>
-	<!-- 页面根容器：整个口算游戏页面的最外层 -->
-	<view class="page">
-		<!-- 极端隐蔽的历史记录入口 -->
-		<view class="hidden-history" @click="goHistory"></view>
-		<!-- 游戏主内容区：弹窗关闭时才显示 -->
-		<view class="game-wrap" v-show="!showModal">
-			<!-- 顶部标题栏：包含关卡、题数、分数信息 -->
-			<view class="header">
-				<!-- 信息条容器：存放三个状态信息 -->
-				<view class="header">
-				    <!-- 信息条容器：存放三个状态信息 -->
-				    <view class="info-bar">
-				        <!-- 关卡信息：显示当前等级 -->
-				        <view class="info-item">⭐{{ level }}</view>
-				        <!-- 答题进度：已答/总题数10题 -->
-				        <view class="info-item">📝{{ total }}/10</view>
-				        <!-- 得分信息：显示当前总分 -->
-				        <view class="info-item">🏆{{ score }}</view>
-				    </view>
-				
-				    <!-- 新增：底部进度条 -->
-				    <view class="progress-bar">
-				        <view class="progress-inner" :style="{ width: (total / 10) * 100 + '%' }"></view>
-				    </view>
+	<view class="index-page">
+		<!-- 顶部自定义头部 -->
+		<view class="custom-header">
+			<text class="header-title">幼儿快乐学堂</text>
+			<text class="header-sub">选一个科目开始学习吧</text>
+		</view>
+
+		<!-- 单独居中的学科容器 -->
+		<view class="center-box">
+			<view class="subject-wrap">
+				<!-- 口算 -->
+				<view class="subject-btn yellow" @click="goMath">
+					<view class="btn-icon">
+						<text class="icon-emoji">🐰</text>
+					</view>
+					<text class="btn-name">口算</text>
 				</view>
-				
-			</view>
 
-			<!-- 题目展示盒子：显示数学算式 -->
-			<view class="question-box">
-				<!-- 题目文本：渲染当前生成的口算题 -->
-				<text class="question">{{ qText }}</text>
-			</view>
+				<!-- 拼音 -->
+				<view class="subject-btn blue" @click="goPinyin">
+					<view class="btn-icon">
+						<text class="icon-emoji">🐣</text>
+					</view>
+					<text class="btn-name">拼音</text>
+				</view>
 
-			<!-- 输入框容器：包裹答案输入区域 -->
-			<view class="input-wrap">
-				<!-- 答案输入框：数字类型，双向绑定用户答案，倒计时期间禁用 -->
-				<input ref="inputBox" v-model="userAns" type="number" class="answer-input" placeholder="?"
-					:disabled="isCountDown" />
-			</view>
+				<!-- 汉字 -->
+				<view class="subject-btn pink" @click="goChinese">
+					<view class="btn-icon">
+						<text class="icon-emoji">🐇</text>
+					</view>
+					<text class="btn-name">汉字</text>
+				</view>
 
-			<!-- 按钮容器：提交答案按钮 -->
-			<view class="btn-wrap">
-				<!-- 提交按钮：点击校验答案，倒计时期间禁用点击 -->
-				<view class="submit-btn" @click="checkAnswer" :disabled="isCountDown"></view>
-			</view>
-
-			<!-- 提示信息区：显示正确/错误/请输入数字，动态绑定样式 -->
-			<view class="tip" :class="msgType">
-				<!-- 提示文字内容 -->
-				{{ msg }}
-				<!-- 倒计时显示：倒计时中且数字>0时显示 -->
-				<text v-if="isCountDown && countDownNum > 0" style="margin-left:20rpx;color:#1677ff">
-					⏳{{ countDownNum }}s
-				</text>
+				<!-- 英语 -->
+				<view class="subject-btn green" @click="goEnglish">
+					<view class="btn-icon">
+						<text class="icon-emoji">🔤</text>
+					</view>
+					<text class="btn-name">英语</text>
+				</view>
 			</view>
 		</view>
 
-		<!-- 结算弹窗遮罩层：弹窗开启时显示 -->
-		<view class="modal-mask" v-show="showModal">
-			<!-- 弹窗内容盒子：弹窗主体区域 -->
-			<view class="modal-content">
-				<!-- 弹窗标题：通关/未通关提示 -->
-				<view class="modal-title">{{ modalTitle }}</view>
-
-				<!-- 结果统计信息：展示本局答题数据 -->
-				<view class="result-info">
-					<!-- 显示当前关卡等级 -->
-					<view>⭐ 当前关卡：{{ level }}</view>
-					<!-- 显示答对题目数量 -->
-					<view>✅ 答对题目：{{ right }}</view>
-					<!-- 显示答错题目数量 -->
-					<view>❌ 答错题目：{{ wrong }}</view>
-					<!-- 显示本局最终得分 -->
-					<view>🏆 本局得分：{{ score }}</view>
-					<!-- 显示正确率：保留1位小数，无答题时显示0 -->
-					<view>
-						📈 正确率：{{ total > 0 ? (right / total * 100).toFixed(1) : 0 }}%
-					</view>
-				</view>
-
-				<!-- 试卷详情盒子：展示每一题的答题记录 -->
-				<view class="paper-box">
-					<!-- 试卷标题 -->
-					<view class="paper-title">📄 本关试卷详情</view>
-					<!-- 单题记录项：循环渲染答卷列表 -->
-					<view class="paper-item" v-for="(item, index) in answerPaper" :key="index">
-						<!-- 题号：第1题~第10题 -->
-						<view class="q-index">第{{ index + 1 }}题</view>
-						<!-- 题目内容区：展示题目+答案信息 -->
-						<view class="q-content">
-							<!-- 题目原文 -->
-							{{ item.question }}
-							<!-- 首次错误答案：有值时才显示 -->
-							<text class="ans-wrong" v-if="item.firstWrongAnswer !== ''">
-								首次错误答案：{{ item.firstWrongAnswer }}
-							</text>
-							<!-- 用户最终答对的答案 -->
-							<text class="ans-user">你的最终答案：{{ item.userFinalAnswer }}</text>
-							<!-- 题目正确答案 -->
-							<text class="ans-real">正确答案：{{ item.realAnswer }}</text>
-						</view>
-						<!-- 对错标签：根据答题结果动态显示样式 -->
-						<view class="q-tag" :class="item.isRight ? 'tag-right' : 'tag-wrong'">
-							{{ item.isRight ? '答对' : '答错' }}
-						</view>
-					</view>
-				</view>
-
-				<!-- 通关奖励盒子：通关时显示奖励图标 -->
-				<view class="reward-box" v-if="pass">
-					<image class="reward-img" :src="rewardText" mode="widthFix" @click="previewRewardImage"></image>
-				</view>
-				<!-- 未通关提示：未通关时显示沮丧表情 -->
-				<view class="no-pass" v-else>
-					<image class="reward-img" src="/static/images/Frown.png" mode="widthFix"></image>
-				</view>
-
-				<!-- 操作按钮：下一关/重新挑战，动态样式+文字 -->
-				<button class="action-btn" :class="pass ? 'next' : 'again'" @click="action">
-					{{ pass ? '➡️ 下一关' : '🔁 重新挑战' }}
-				</button>
-			</view>
+		<!-- 底部装饰文案 固定页面底部 -->
+		<view class="footer-tips">
+			<text class="tips-text">每天十分钟 · 轻松涨知识 ✨</text>
 		</view>
 	</view>
 </template>
 
 <script>
-	import script from './index.js'
-	export default script
+	export default {
+		data() {
+			return {};
+		},
+		onLoad() {
+			const subject = uni.getStorageSync('currentSubject');
+			const mathMaxNum = uni.getStorageSync('mathMaxNum');
+			if (subject == 'math' && mathMaxNum) {
+				uni.redirectTo({
+					url: `/pages/kidsMath/kidsMath?maxNum=${mathMaxNum}`
+				})
+			}
+		},
+		methods: {
+			// 口算：存入缓存后跳转配置页
+			goMath() {
+				console.log(123)
+				uni.setStorageSync('currentSubject', 'math');
+				uni.navigateTo({
+					url: "/pages/mathConfig/mathConfig"
+				});
+			},
+			// 拼音
+			goPinyin() {
+				uni.setStorageSync('currentSubject', 'pinyin');
+				uni.showToast({
+					title: "拼音功能开发中"
+				});
+			},
+			// 汉字
+			goChinese() {
+				uni.setStorageSync('currentSubject', 'chinese');
+				uni.showToast({
+					title: "汉字功能开发中"
+				});
+			},
+			// 英语
+			goEnglish() {
+				uni.setStorageSync('currentSubject', 'english');
+				uni.showToast({
+					title: "英语功能开发中"
+				});
+			}
+		}
+	};
 </script>
 
-<style src="./index.css"></style>
+<style scoped>
+	/* 全局强制盒模型，杜绝元素宽度溢出 */
+	view,
+	text {
+		box-sizing: border-box;
+	}
+
+	/* 页面全局背景 */
+	.index-page {
+		min-height: 100vh;
+		width: 100%;
+		background: linear-gradient(180deg, #91d4ff 0%, #c7f0ff 45%, #b8f0a8 100%);
+		padding: 60rpx 30rpx 40rpx;
+		overflow-x: hidden;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	/* 自定义头部 */
+	.custom-header {
+		text-align: center;
+		margin-bottom: 40rpx;
+		width: 100%;
+	}
+
+	.header-title {
+		font-size: 52rpx;
+		font-weight: bold;
+		color: #fff;
+		text-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.15);
+		display: block;
+	}
+
+	.header-sub {
+		font-size: 30rpx;
+		color: #ffffff;
+		margin-top: 10rpx;
+		display: block;
+		opacity: 0.9;
+	}
+
+	/* 核心：学科区域容器，垂直空间占满，内容靠上偏移实现居中偏上 */
+	.center-box {
+		flex: 1;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+		/* 向下内边距 = 向上偏移距离，数值越大整体越靠上 */
+		padding-top: 120rpx;
+	}
+
+	/* 科目按钮容器 */
+	.subject-wrap {
+		width: 100%;
+		max-width: 640rpx;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 52rpx;
+		padding: 0 10rpx;
+	}
+
+	/* 通用按钮样式 */
+	.subject-btn {
+		width: 100%;
+		height: 140rpx;
+		border-radius: 70rpx;
+		display: flex;
+		align-items: center;
+		padding: 0 30rpx;
+		box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.12);
+		transition: all 0.18s ease;
+	}
+
+	.subject-btn:active {
+		transform: scale(0.96);
+		box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.1);
+	}
+
+	/* 四种科目配色 */
+	.subject-btn.yellow {
+		background: linear-gradient(90deg, #ffdd60, #ffc845);
+	}
+
+	.subject-btn.blue {
+		background: linear-gradient(90deg, #74ccff, #59bfff);
+	}
+
+	.subject-btn.pink {
+		background: linear-gradient(90deg, #ffabb8, #ff8e9e);
+	}
+
+	.subject-btn.green {
+		background: linear-gradient(90deg, #9be87a, #7ed957);
+	}
+
+	/* 按钮左侧卡通图标 */
+	.btn-icon {
+		width: 90rpx;
+		height: 90rpx;
+		background: rgba(255, 255, 255, 0.35);
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-right: 28rpx;
+	}
+
+	.icon-emoji {
+		font-size: 48rpx;
+	}
+
+	/* 按钮文字 */
+	.btn-name {
+		font-size: 56rpx;
+		font-weight: bold;
+		color: #ffffff;
+		text-shadow: 0 3rpx 6rpx rgba(0, 0, 0, 0.1);
+	}
+
+	/* 底部装饰文字 */
+	.footer-tips {
+		margin-top: 60rpx;
+	}
+
+	.tips-text {
+		font-size: 32rpx;
+		color: #fff;
+		letter-spacing: 2rpx;
+		text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+	}
+</style>
