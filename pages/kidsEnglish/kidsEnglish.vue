@@ -1,6 +1,6 @@
 <template>
 	<view class="page">
-		<!-- 单词展示区（朗读时高亮）+ 点击重读 -->
+		<!-- 单词展示区（朗读时高亮）+ 点击重读【点击这里会让灯泡卡片缩回】 -->
 		<view class="word-card" :class="speaking ? 'speaking' : ''" @click="playAudio3Times">
 			<text class="word">{{ currentWord }}</text>
 		</view>
@@ -15,9 +15,10 @@
 			</view>
 		</view>
 
-		<!-- 单词释义 -->
-		<view class="word-meaning" v-if="currentWord">
-			<text class="meaning-text">单词释义：{{ currentMeaning }}</text>
+		<!-- 独立灯泡提示卡片：点击放大，播放结束/点上方单词才缩回 -->
+		<view class="hint-bulb-wrap" :class="{bulbActive: bulbActive}" v-if="currentWord" @click="showAndSpeakMean">
+			<text class="bulb-icon">💡</text>
+			<text v-show="showMeanText" class="meaning-desc">释义：{{ currentMeaning }}</text>
 		</view>
 
 		<!-- ✅ 全屏撒花弹窗 答对全屏覆盖 -->
@@ -59,7 +60,11 @@ export default {
 			showSuccess: false,
 			startDate: "",
 			endDate: "",
-			voiceAudio: null
+			voiceAudio: null,
+			meanAudio: null,
+			showMeanText: false,
+			hideTimer: null,
+			bulbActive: false
 		};
 	},
 	onLoad() {
@@ -68,10 +73,16 @@ export default {
 		this.nextWord();
 	},
 	onUnload() {
+		if (this.hideTimer) clearTimeout(this.hideTimer);
 		if (this.voiceAudio) {
 			this.voiceAudio.stop();
 			this.voiceAudio.destroy();
 			this.voiceAudio = null;
+		}
+		if (this.meanAudio) {
+			this.meanAudio.stop();
+			this.meanAudio.destroy();
+			this.meanAudio = null;
 		}
 	},
 	methods: {
@@ -143,14 +154,104 @@ export default {
 				audio.destroy();
 			});
 		},
-		nextWord() {
+		// 点击灯泡：卡片放大，不再自动收缩
+		showAndSpeakMean() {
+			this.bulbActive = true;
+			if (this.hideTimer) clearTimeout(this.hideTimer);
+			this.showMeanText = true;
+			this.speakChineseMeaning();
+		},
+		// 中文释义朗读
+		speakChineseMeaning() {
+			if (!this.currentMeaning) return;
 			if (this.voiceAudio) {
 				this.voiceAudio.stop();
 				this.voiceAudio.destroy();
 				this.voiceAudio = null;
 			}
 			this.speaking = false;
+			if (this.meanAudio) {
+				this.meanAudio.stop();
+				this.meanAudio.destroy();
+				this.meanAudio = null;
+			}
+			const text = encodeURIComponent(this.currentMeaning);
+			const ttsUrl = `https://fanyi.baidu.com/gettts?text=${text}&lan=zh&spd=4&source=web`;
+			this.meanAudio = uni.createInnerAudioContext();
+			this.meanAudio.src = ttsUrl;
+			this.meanAudio.play();
+			// 语音播放完毕1.5s隐藏文字 + 灯泡卡片缩小复位
+			this.meanAudio.onEnded(() => {
+				this.meanAudio.destroy();
+				this.meanAudio = null;
+				this.hideTimer = setTimeout(() => {
+					this.showMeanText = false;
+					this.bulbActive = false; // 朗读结束自动缩回卡片
+				}, 1500);
+			});
+			this.meanAudio.onError(() => {
+				this.meanAudio.destroy();
+				this.meanAudio = null;
+				this.hideTimer = setTimeout(() => {
+					this.showMeanText = false;
+					this.bulbActive = false;
+				}, 1500);
+			});
+		},
+		// 点击上方英文单词：停止中文、灯泡卡片立刻缩小
+		playAudio3Times() {
+			// 点击单词区域，灯泡卡片缩回
+			this.bulbActive = false;
+			if (this.hideTimer) clearTimeout(this.hideTimer);
+			this.showMeanText = false;
+
+			if (this.meanAudio) {
+				this.meanAudio.stop();
+				this.meanAudio.destroy();
+				this.meanAudio = null;
+			}
+			if (this.speaking || !this.currentAudio) return;
+			let count = 0;
+			this.speaking = true;
+			const play = () => {
+				if (this.voiceAudio) this.voiceAudio.destroy();
+				this.voiceAudio = uni.createInnerAudioContext();
+				this.voiceAudio.src = this.currentAudio;
+				this.voiceAudio.play();
+				this.voiceAudio.onEnded(() => {
+					count++;
+					if (count >= 3) {
+						this.speaking = false;
+						this.voiceAudio.destroy();
+						this.voiceAudio = null;
+						return;
+					}
+					setTimeout(play, 400);
+				});
+				this.voiceAudio.onError(() => {
+					this.speaking = false;
+					this.voiceAudio.destroy();
+					this.voiceAudio = null;
+				});
+			};
+			play();
+		},
+		nextWord() {
+			if (this.hideTimer) clearTimeout(this.hideTimer);
+			if (this.voiceAudio) {
+				this.voiceAudio.stop();
+				this.voiceAudio.destroy();
+				this.voiceAudio = null;
+			}
+			if (this.meanAudio) {
+				this.meanAudio.stop();
+				this.meanAudio.destroy();
+				this.meanAudio = null;
+			}
+			this.speaking = false;
 			this.showSuccess = false;
+			this.showMeanText = false;
+			this.bulbActive = false;
 			if (this.options.length) {
 				this.options.forEach(it => {
 					it.clickWrong = false;
@@ -191,41 +292,12 @@ export default {
 				}));
 			this.options = [right, ...wrongArr].sort(() => Math.random() - 0.5);
 		},
-		playAudio3Times() {
-			if (this.speaking || !this.currentAudio) return;
-			let count = 0;
-			this.speaking = true;
-			const play = () => {
-				if (this.voiceAudio) this.voiceAudio.destroy();
-				this.voiceAudio = uni.createInnerAudioContext();
-				this.voiceAudio.src = this.currentAudio;
-				this.voiceAudio.play();
-				this.voiceAudio.onEnded(() => {
-					count++;
-					if (count >= 3) {
-						this.speaking = false;
-						this.voiceAudio.destroy();
-						this.voiceAudio = null;
-						return;
-					}
-					setTimeout(play, 400);
-				});
-				this.voiceAudio.onError(() => {
-					this.speaking = false;
-					this.voiceAudio.destroy();
-					this.voiceAudio = null;
-				});
-			};
-			play();
-		},
-		// 答对2秒自动切题
 		checkAnswer(item) {
 			if (this.showSuccess) return;
 			if (item.correct) {
 				this.playSound("https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3");
 				item.clickCorrect = true;
 				this.showSuccess = true;
-				// ✅ 2000ms后自动下一题
 				setTimeout(() => this.nextWord(), 2000);
 			} else {
 				item.clickWrong = true;
@@ -363,7 +435,6 @@ export default {
 		background: #e1ffeb;
 	}
 
-	/* ✅ 全屏撒花样式 铺满整屏 */
 	.full-celebrate {
 		position: fixed;
 		left: 0;
@@ -386,15 +457,41 @@ export default {
 		text-shadow: 0 4rpx 10rpx rgba(255, 60, 120, 0.3);
 	}
 
-	.word-meaning {
-		margin-top: 40rpx;
+	/* 灯泡卡片 */
+	.hint-bulb-wrap {
+		margin: 40rpx 30rpx 0;
+		padding: 30rpx;
+		background: #fffbe6;
+		border-radius: 32rpx;
 		text-align: center;
+		cursor: pointer;
+		box-shadow: 0 6rpx 20rpx rgba(255,200,50,0.18);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 20rpx;
+		flex-wrap: wrap;
+		transition: all 0.3s ease;
+	}
+	/* 点击放大，无自动回弹 */
+	.bulbActive {
+		transform: scale(1.06);
+		box-shadow: 0 10rpx 30rpx rgba(255,200,50,0.25);
 	}
 
-	.meaning-text {
+	.bulb-icon {
+		font-size: 64rpx;
+		animation: bulbFlash 1s infinite alternate;
+	}
+	.meaning-desc {
 		font-size: 34rpx;
-		color: #555;
+		color: #d48806;
 		font-weight: 500;
+	}
+
+	@keyframes bulbFlash {
+		0% { opacity: 0.55; transform: scale(0.95); }
+		100% { opacity: 1; transform: scale(1.08); }
 	}
 
 	@keyframes fullZoom {

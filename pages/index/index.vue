@@ -2,8 +2,16 @@
 	<view class="index-page">
 		<!-- 顶部自定义头部 -->
 		<view class="custom-header">
-			<text class="header-title">🌟幼儿快乐学堂🌟</text>
-			<text class="header-sub">小朋友，快来开始快乐学习吧～</text>
+			<!-- 左侧标题区域 -->
+			<view class="header-left">
+				<text class="header-title">🌟幼儿快乐学堂🌟</text>
+				<text class="header-sub">小朋友，快来开始快乐学习吧～</text>
+			</view>
+			
+			<!-- 右侧我的图标入口 -->
+			<view class="header-right" @click="goMy">
+				<text class="my-icon">👤</text>
+			</view>
 		</view>
 
 		<!-- 单独居中的学科容器 -->
@@ -65,6 +73,17 @@
 			}
 		},
 		methods: {
+			// 我的页面入口
+			goMy() {
+				uni.showToast({
+					title: "我的中心",
+					icon: "none"
+				})
+				// 如需跳转真实页面，替换下面代码
+				// uni.navigateTo({
+				// 	url: "/pages/my/my"
+				// })
+			},
 			// 口算：存入缓存后跳转配置页
 			goMath() {
 				uni.setStorageSync('currentSubject', 'math');
@@ -119,11 +138,18 @@
 		align-items: center;
 	}
 
-	/* 自定义头部 - 幼教风格 */
+	/* 自定义头部 - 左右布局 */
 	.custom-header {
-		text-align: center;
-		margin-bottom: 50rpx;
 		width: 100%;
+		margin-bottom: 50rpx;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	
+	/* 左侧标题 */
+	.header-left {
+		flex: 1;
 	}
 
 	.header-title {
@@ -142,6 +168,22 @@
 		display: block;
 		opacity: 0.95;
 		font-weight: 500;
+	}
+	
+	/* 右侧我的图标 */
+	.header-right {
+		width: 80rpx;
+		height: 80rpx;
+		background: rgba(255,255,255,0.3);
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 3rpx solid rgba(255,255,255,0.5);
+	}
+	
+	.my-icon {
+		font-size: 40rpx;
 	}
 
 	/* 核心：学科区域容器 */
