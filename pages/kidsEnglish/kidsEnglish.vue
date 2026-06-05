@@ -1,7 +1,7 @@
 <template>
 	<view class="page">
 		<!-- 单词展示区（朗读时高亮）+ 点击重读 -->
-		<view class="word-card" :class="speaking ? 'speaking' : ''" @click="playAudio3Times">
+		<view class="word-card" :class="speaking ? 'speaking' : ''" @click="!speaking && playAudio3Times">
 			<text class="word">{{ currentWord }}</text>
 		</view>
 
@@ -59,16 +59,24 @@
 				options: [],
 				speaking: false,
 				showSuccess: false,
-				startDate: "", // 本周一（自动计算）
-				endDate: "", // 今天（自动计算）
+				startDate: "",
+				endDate: "",
+				voiceAudio: null // 全局缓存朗读音频实例，防止实例泄漏
 			};
 		},
 		onLoad() {
 			// 初始化默认日期
 			this.setDefaultDates();
-			
 			this.filteredList = [...this.wordList];
 			this.nextWord();
+		},
+		onUnload() {
+			// 页面销毁释放音频资源
+			if (this.voiceAudio) {
+				this.voiceAudio.stop();
+				this.voiceAudio.destroy();
+				this.voiceAudio = null;
+			}
 		},
 		methods: {
 			// 格式化日期为 YYYY-MM-DD
@@ -84,7 +92,8 @@
 				const now = new Date();
 				const day = now.getDay(); // 0=周日，1=周一，2=周二...
 				const diff = day === 0 ? -6 : 1 - day;
-				const monday = new Date(now.setDate(now.getDate() + diff));
+				const monday = new Date(now.getTime());
+				monday.setDate(now.getDate() + diff);
 				return this.formatDate(monday);
 			},
 
@@ -105,10 +114,13 @@
 			onEndDateChange(e) {
 				this.endDate = e.detail.value;
 			},
-			// 筛选日期单词
+			// 筛选日期单词（修复字符串日期对比bug）
 			filterByDate() {
+				const start = new Date(this.startDate);
+				const end = new Date(this.endDate);
 				this.filteredList = this.wordList.filter(item => {
-					return item.date >= this.startDate && item.date <= this.endDate;
+					const itemDay = new Date(item.date);
+					return itemDay >= start && itemDay <= end;
 				});
 				uni.showToast({
 					title: `找到 ${this.filteredList.length} 个单词`,
@@ -127,7 +139,6 @@
 						if (res.confirm) {
 							// 重置恢复默认日期：本周一 — 今天
 							this.setDefaultDates();
-							
 							this.filteredList = [...this.wordList];
 							setTimeout(() => {
 								this.nextWord();
@@ -137,16 +148,27 @@
 				});
 			},
 
+			// 答题音效（优化：音频播放结束自动销毁，不再固定延时销毁）
 			playSound(src) {
 				const audio = uni.createInnerAudioContext();
 				audio.src = src;
 				audio.play();
-				setTimeout(() => {
+				audio.onEnded(() => {
 					audio.destroy();
-				}, 2000);
+				});
+				audio.onError(() => {
+					audio.destroy();
+				});
 			},
 
 			nextWord() {
+				// 切换单词先停止并销毁上一轮朗读音频
+				if (this.voiceAudio) {
+					this.voiceAudio.stop();
+					this.voiceAudio.destroy();
+					this.voiceAudio = null;
+				}
+				this.speaking = false;
 				this.showSuccess = false;
 				if (this.options.length) {
 					this.options.forEach(it => {
@@ -180,10 +202,12 @@
 					img: curr.img,
 					correct: true
 				};
-				let wrongArr = all
-					.filter(item => item.word !== curr.word)
+				// 修复：可选不足3个时自动取剩余数量，避免空选项
+				let filterWrong = all.filter(item => item.word !== curr.word);
+				let takeNum = Math.min(3, filterWrong.length);
+				let wrongArr = filterWrong
 					.sort(() => Math.random() - 0.5)
-					.slice(0, 3)
+					.slice(0, takeNum)
 					.map(item => ({
 						word: item.word,
 						img: item.img,
@@ -192,20 +216,32 @@
 				this.options = [right, ...wrongArr].sort(() => Math.random() - 0.5);
 			},
 
+			// 核心修复：三次朗读逻辑，解决偶尔不发音、speaking状态错乱
 			playAudio3Times() {
-				if (this.speaking) return;
+				if (this.speaking || !this.currentAudio) return;
 				let count = 0;
+				this.speaking = true;
 				const play = () => {
-					this.speaking = true;
-					const audio = uni.createInnerAudioContext();
-					audio.src = this.currentAudio;
-					audio.play();
-					audio.onEnded(() => {
+					if (this.voiceAudio) this.voiceAudio.destroy();
+					this.voiceAudio = uni.createInnerAudioContext();
+					this.voiceAudio.src = this.currentAudio;
+					this.voiceAudio.play();
+
+					this.voiceAudio.onEnded(() => {
 						count++;
-						this.speaking = false;
-						if (count < 3) {
-							setTimeout(play, 700);
+						if (count >= 3) {
+							this.speaking = false;
+							this.voiceAudio.destroy();
+							this.voiceAudio = null;
+							return;
 						}
+						setTimeout(play, 700);
+					});
+					// 音频加载失败容错
+					this.voiceAudio.onError(() => {
+						this.speaking = false;
+						this.voiceAudio.destroy();
+						this.voiceAudio = null;
 					});
 				};
 				play();
@@ -250,9 +286,10 @@
 		align-items: center;
 		justify-content: center;
 		gap: 24rpx;
-		box-shadow: 0 -3rpx 15rpx rgba(0,0,0,0.08);
+		box-shadow: 0 -3rpx 15rpx rgba(0, 0, 0, 0.08);
 		z-index: 10;
 	}
+
 	.date-item {
 		display: flex;
 		align-items: center;
@@ -260,6 +297,7 @@
 		font-size: 28rpx;
 		color: #555;
 	}
+
 	.picker-text {
 		padding: 12rpx 18rpx;
 		background: #f7f7f7;
@@ -268,16 +306,17 @@
 		color: #333;
 		border: 1rpx solid #eee;
 	}
-	
+
 	/* 按钮大幅放大 */
 	.filter-btn {
-		padding:10rpx 15rpx;
+		padding: 10rpx 15rpx;
 		font-size: 28rpx;
 		background: #ff6a8e;
 		border-radius: 12rpx;
 		color: #fff;
 		border: none;
 	}
+
 	.reset-btn {
 		padding: 10rpx 15rpx;
 		font-size: 28rpx;
@@ -380,9 +419,11 @@
 			transform: scale(0.4);
 			opacity: 0;
 		}
+
 		60% {
 			transform: scale(1.2);
 		}
+
 		100% {
 			transform: scale(1);
 			opacity: 1;
