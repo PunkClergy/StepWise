@@ -20,8 +20,8 @@
 			<text class="meaning-text">单词释义：{{ currentMeaning }}</text>
 		</view>
 
-		<!-- 答对庆祝动画 -->
-		<view class="celebrate" v-if="showSuccess">
+		<!-- ✅ 全屏撒花弹窗 答对全屏覆盖 -->
+		<view class="full-celebrate" v-if="showSuccess">
 			<text class="celebrate-text">🎉 太棒啦！</text>
 		</view>
 
@@ -59,17 +59,15 @@ export default {
 			showSuccess: false,
 			startDate: "",
 			endDate: "",
-			voiceAudio: null // 全局缓存朗读音频实例，防止实例泄漏
+			voiceAudio: null
 		};
 	},
 	onLoad() {
-		// 初始化默认日期
 		this.setDefaultDates();
 		this.filteredList = [...this.wordList];
 		this.nextWord();
 	},
 	onUnload() {
-		// 页面销毁释放音频资源
 		if (this.voiceAudio) {
 			this.voiceAudio.stop();
 			this.voiceAudio.destroy();
@@ -77,42 +75,33 @@ export default {
 		}
 	},
 	methods: {
-		// 格式化日期为 YYYY-MM-DD
 		formatDate(date) {
 			const year = date.getFullYear();
 			const month = (date.getMonth() + 1).toString().padStart(2, '0');
 			const day = date.getDate().toString().padStart(2, '0');
 			return `${year}-${month}-${day}`;
 		},
-
-		// 获取本周一日期
 		getMondayDate() {
 			const now = new Date();
-			const day = now.getDay(); // 0=周日，1=周一，2=周二...
+			const day = now.getDay();
 			const diff = day === 0 ? -6 : 1 - day;
 			const monday = new Date(now.getTime());
 			monday.setDate(now.getDate() + diff);
 			return this.formatDate(monday);
 		},
-
-		// 获取今天日期
 		getTodayDate() {
 			return this.formatDate(new Date());
 		},
-
-		// 设置默认日期：开始=本周一，结束=今天
 		setDefaultDates() {
 			this.startDate = this.getMondayDate();
 			this.endDate = this.getTodayDate();
 		},
-
 		onStartDateChange(e) {
 			this.startDate = e.detail.value;
 		},
 		onEndDateChange(e) {
 			this.endDate = e.detail.value;
 		},
-		// 筛选日期单词（修复字符串日期对比bug）
 		filterByDate() {
 			const start = new Date(this.startDate);
 			const end = new Date(this.endDate);
@@ -128,14 +117,12 @@ export default {
 				this.nextWord();
 			}, 500);
 		},
-		// 重置 + 确认框
 		resetAll() {
 			uni.showModal({
 				title: "确认重置",
 				content: "确定要显示所有单词吗？",
 				success: (res) => {
 					if (res.confirm) {
-						// 重置恢复默认日期：本周一 — 今天
 						this.setDefaultDates();
 						this.filteredList = [...this.wordList];
 						setTimeout(() => {
@@ -145,8 +132,6 @@ export default {
 				}
 			});
 		},
-
-		// 答题音效（优化：音频播放结束自动销毁，不再固定延时销毁）
 		playSound(src) {
 			const audio = uni.createInnerAudioContext();
 			audio.src = src;
@@ -158,9 +143,7 @@ export default {
 				audio.destroy();
 			});
 		},
-
 		nextWord() {
-			// 切换单词先停止并销毁上一轮朗读音频
 			if (this.voiceAudio) {
 				this.voiceAudio.stop();
 				this.voiceAudio.destroy();
@@ -174,7 +157,6 @@ export default {
 					it.clickCorrect = false;
 				});
 			}
-
 			if (this.filteredList.length === 0) {
 				uni.showToast({
 					title: "该日期无单词",
@@ -182,17 +164,14 @@ export default {
 				});
 				return;
 			}
-
 			let rand = Math.floor(Math.random() * this.filteredList.length);
 			let curr = this.filteredList[rand];
 			this.currentWord = curr.word;
 			this.currentMeaning = curr.meaning;
 			this.currentAudio = curr.audio;
-
 			this.genOptions(curr);
 			setTimeout(() => this.playAudio3Times(), 300);
 		},
-
 		genOptions(curr) {
 			let all = [...this.filteredList];
 			let right = {
@@ -200,7 +179,6 @@ export default {
 				img: curr.img,
 				correct: true
 			};
-			// 修复：可选不足3个时自动取剩余数量，避免空选项
 			let filterWrong = all.filter(item => item.word !== curr.word);
 			let takeNum = Math.min(3, filterWrong.length);
 			let wrongArr = filterWrong
@@ -213,8 +191,6 @@ export default {
 				}));
 			this.options = [right, ...wrongArr].sort(() => Math.random() - 0.5);
 		},
-
-		// 核心修复：三次朗读逻辑，解决偶尔不发音、speaking状态错乱
 		playAudio3Times() {
 			if (this.speaking || !this.currentAudio) return;
 			let count = 0;
@@ -224,7 +200,6 @@ export default {
 				this.voiceAudio = uni.createInnerAudioContext();
 				this.voiceAudio.src = this.currentAudio;
 				this.voiceAudio.play();
-
 				this.voiceAudio.onEnded(() => {
 					count++;
 					if (count >= 3) {
@@ -235,7 +210,6 @@ export default {
 					}
 					setTimeout(play, 400);
 				});
-				// 音频加载失败容错
 				this.voiceAudio.onError(() => {
 					this.speaking = false;
 					this.voiceAudio.destroy();
@@ -244,26 +218,24 @@ export default {
 			};
 			play();
 		},
-
-		// 需求2：选错立刻终止朗读
+		// 答对2秒自动切题
 		checkAnswer(item) {
 			if (this.showSuccess) return;
 			if (item.correct) {
 				this.playSound("https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3");
 				item.clickCorrect = true;
 				this.showSuccess = true;
-				setTimeout(() => this.nextWord(), 1500);
+				// ✅ 2000ms后自动下一题
+				setTimeout(() => this.nextWord(), 2000);
 			} else {
 				item.clickWrong = true;
 				uni.vibrateShort();
-				// 立刻停止当前单词朗读
 				if (this.voiceAudio) {
 					this.voiceAudio.stop();
 					this.voiceAudio.destroy();
 					this.voiceAudio = null;
 				}
 				this.speaking = false;
-				// 播放错误音效
 				this.playSound("https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3");
 			}
 		},
@@ -281,7 +253,6 @@ export default {
 		position: relative;
 	}
 
-	/* 固定底部 */
 	.date-select-bottom {
 		position: fixed;
 		left: 0;
@@ -314,7 +285,6 @@ export default {
 		border: 1rpx solid #eee;
 	}
 
-	/* 按钮大幅放大 */
 	.filter-btn {
 		padding: 10rpx 15rpx;
 		font-size: 28rpx;
@@ -393,18 +363,24 @@ export default {
 		background: #e1ffeb;
 	}
 
-	.celebrate {
+	/* ✅ 全屏撒花样式 铺满整屏 */
+	.full-celebrate {
 		position: fixed;
-		top: 42vh;
 		left: 0;
+		top: 0;
 		right: 0;
-		text-align: center;
-		z-index: 99;
-		animation: zoom 0.6s ease-in-out;
+		bottom: 0;
+		width: 100vw;
+		height: 100vh;
+		background: rgba(255,255,255,0.7);
+		z-index: 999;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		animation: fullZoom 0.6s ease-in-out;
 	}
-
 	.celebrate-text {
-		font-size: 66rpx;
+		font-size: 80rpx;
 		color: #ff4499;
 		font-weight: bold;
 		text-shadow: 0 4rpx 10rpx rgba(255, 60, 120, 0.3);
@@ -421,16 +397,14 @@ export default {
 		font-weight: 500;
 	}
 
-	@keyframes zoom {
+	@keyframes fullZoom {
 		0% {
 			transform: scale(0.4);
 			opacity: 0;
 		}
-
 		60% {
 			transform: scale(1.2);
 		}
-
 		100% {
 			transform: scale(1);
 			opacity: 1;
