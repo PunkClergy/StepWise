@@ -1,13 +1,12 @@
 <template>
 	<view class="page">
-		<!-- 顶部：返回首页 + 错题本 -->
+		<!-- 顶部：返回首页 + 错题本入口（原去测试位置） -->
 		<view class="top-icon-wrap">
 			<view class="icon-btn left-icon" @click="goHome">
 				<text>🏠</text>
 			</view>
-			<!-- <view class="icon-btn right-icon" @click="toErrorPage">
-				<text>📖</text>
-			</view> -->
+			<!-- 顶部改为 错题本 -->
+			<view class="test-btn" @click="goErrorBook">错题本</view>
 		</view>
 
 		<!-- 单词展示区（朗读时高亮）+ 点击重读【点击这里会让灯泡卡片缩回】 -->
@@ -36,21 +35,9 @@
 			<text class="celebrate-text">🎉 太棒啦！</text>
 		</view>
 
-		<!-- 👇 固定底部日期筛选 -->
-		<view class="date-select-bottom">
-			<view class="date-item">
-				<picker mode="date" :value="startDate" @change="onStartDateChange">
-					<view class="picker-text">{{ startDate }}</view>
-				</picker>
-			</view>
-			-
-			<view class="date-item">
-				<picker mode="date" :value="endDate" @change="onEndDateChange">
-					<view class="picker-text">{{ endDate }}</view>
-				</picker>
-			</view>
-			<view @click="filterByDate" class="filter-btn">筛选</view>
-			<view @click="resetAll" class="reset-btn">重置</view>
+		<!-- 底部固定：改为 去测试 -->
+		<view class="error-book-bottom" @click="goTestPage">
+			<text>📝 去测试</text>
 		</view>
 	</view>
 </template>
@@ -70,8 +57,6 @@
 				options: [],
 				speaking: false,
 				showSuccess: false,
-				startDate: "",
-				endDate: "",
 				voiceAudio: null,
 				meanAudio: null,
 				showMeanText: false,
@@ -80,7 +65,6 @@
 			};
 		},
 		onLoad() {
-			this.setDefaultDates();
 			this.filteredList = [...this.wordList];
 			this.nextWord();
 		},
@@ -104,70 +88,19 @@
 					url: "/pages/index/index"
 				});
 			},
-			// 跳转到错题本
-			toErrorPage() {
+			// 跳转测试页面
+			goTestPage() {
 				uni.navigateTo({
-					url: "/pages/history/history"
+					url: "/pages/kidsEnglishPaper/kidsEnglishPaper"
+				});
+			},
+			// 跳转错题本页面
+			goErrorBook() {
+				uni.navigateTo({
+					url: "/pages/errorBook/errorBook"
 				});
 			},
 
-			formatDate(date) {
-				const year = date.getFullYear();
-				const month = (date.getMonth() + 1).toString().padStart(2, '0');
-				const day = date.getDate().toString().padStart(2, '0');
-				return `${year}-${month}-${day}`;
-			},
-			getMondayDate() {
-				const now = new Date();
-				const day = now.getDay();
-				const diff = day === 0 ? -6 : 1 - day;
-				const monday = new Date(now.getTime());
-				monday.setDate(now.getDate() + diff);
-				return this.formatDate(monday);
-			},
-			getTodayDate() {
-				return this.formatDate(new Date());
-			},
-			setDefaultDates() {
-				this.startDate = this.getMondayDate();
-				this.endDate = this.getTodayDate();
-			},
-			onStartDateChange(e) {
-				this.startDate = e.detail.value;
-			},
-			onEndDateChange(e) {
-				this.endDate = e.detail.value;
-			},
-			filterByDate() {
-				const start = new Date(this.startDate);
-				const end = new Date(this.endDate);
-				this.filteredList = this.wordList.filter(item => {
-					const itemDay = new Date(item.date);
-					return itemDay >= start && itemDay <= end;
-				});
-				uni.showToast({
-					title: `找到 ${this.filteredList.length} 个单词`,
-					icon: "none"
-				});
-				setTimeout(() => {
-					this.nextWord();
-				}, 500);
-			},
-			resetAll() {
-				uni.showModal({
-					title: "确认重置",
-					content: "确定要显示所有单词吗？",
-					success: (res) => {
-						if (res.confirm) {
-							this.setDefaultDates();
-							this.filteredList = [...this.wordList];
-							setTimeout(() => {
-								this.nextWord();
-							}, 500);
-						}
-					}
-				});
-			},
 			playSound(src) {
 				const audio = uni.createInnerAudioContext();
 				audio.src = src;
@@ -285,7 +218,7 @@
 				}
 				if (this.filteredList.length === 0) {
 					uni.showToast({
-						title: "该日期无单词",
+						title: "暂无单词",
 						icon: "none"
 					});
 					return;
@@ -349,6 +282,7 @@
 		right: 0;
 		display: flex;
 		justify-content: space-between;
+		align-items: center;
 		padding: 0 30rpx;
 		z-index: 10;
 	}
@@ -365,64 +299,25 @@
 		font-size: 36rpx;
 	}
 
+	/* 顶部按钮样式 */
+	.test-btn {
+		font-size: 28rpx;
+		color: #fff;
+		background: #ff6a8e;
+		padding: 12rpx 24rpx;
+		border-radius: 20rpx;
+		box-shadow: 0 3rpx 9rpx rgba(255, 106, 142, 0.2);
+	}
+
 	.page {
 		padding: 30rpx;
-		padding-bottom: 120rpx;
 		padding-top: 120rpx;
+		/* 底部留白，防止被固定按钮遮挡内容 */
+		padding-bottom: 140rpx;
 		background: linear-gradient(to bottom, #fff5f7, #f0f9ff);
 		min-height: 100vh;
 		box-sizing: border-box;
 		position: relative;
-	}
-
-	.date-select-bottom {
-		position: fixed;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: #ffffff;
-		padding: 24rpx 30rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 24rpx;
-		box-shadow: 0 -3rpx 15rpx rgba(0, 0, 0, 0.08);
-		z-index: 10;
-	}
-
-	.date-item {
-		display: flex;
-		align-items: center;
-		gap: 10rpx;
-		font-size: 28rpx;
-		color: #555;
-	}
-
-	.picker-text {
-		padding: 12rpx 18rpx;
-		background: #f7f7f7;
-		border-radius: 12rpx;
-		font-size: 28rpx;
-		color: #333;
-		border: 1rpx solid #eee;
-	}
-
-	.filter-btn {
-		padding: 10rpx 15rpx;
-		font-size: 28rpx;
-		background: #ff6a8e;
-		border-radius: 12rpx;
-		color: #fff;
-		border: none;
-	}
-
-	.reset-btn {
-		padding: 10rpx 15rpx;
-		font-size: 28rpx;
-		background: #888;
-		border-radius: 12rpx;
-		color: #fff;
-		border: none;
 	}
 
 	.word-card {
@@ -540,6 +435,23 @@
 		font-size: 34rpx;
 		color: #d48806;
 		font-weight: 500;
+	}
+
+	/* 底部固定按钮 */
+	.error-book-bottom {
+		position: fixed;
+		left: 30rpx;
+		right: 30rpx;
+		bottom: 30rpx;
+		height: 88rpx;
+		line-height: 88rpx;
+		text-align: center;
+		background: #ff6a8e;
+		color: #fff;
+		font-size: 32rpx;
+		border-radius: 44rpx;
+		box-shadow: 0 4rpx 12rpx rgba(255, 106, 142, 0.3);
+		z-index: 9;
 	}
 
 	@keyframes bulbFlash {

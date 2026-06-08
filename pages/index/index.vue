@@ -7,7 +7,7 @@
 				<text class="header-title">🌟幼儿快乐学堂🌟</text>
 				<text class="header-sub">小朋友，快来开始快乐学习吧～</text>
 			</view>
-			
+
 			<!-- 右侧我的图标入口 -->
 			<view class="header-right" @click="goMy">
 				<text class="my-icon">👤</text>
@@ -75,14 +75,9 @@
 		methods: {
 			// 我的页面入口
 			goMy() {
-				uni.showToast({
-					title: "我的中心",
-					icon: "none"
+				uni.navigateTo({
+					url: "/pages/MyCenter/MyCenter"
 				})
-				// 如需跳转真实页面，替换下面代码
-				// uni.navigateTo({
-				// 	url: "/pages/my/my"
-				// })
 			},
 			// 口算：存入缓存后跳转配置页
 			goMath() {
@@ -96,7 +91,7 @@
 				uni.setStorageSync('currentSubject', 'pinyin');
 				uni.showToast({
 					title: "拼音功能开发中",
-					icon:"none"
+					icon: "none"
 				});
 			},
 			// 汉字
@@ -104,7 +99,7 @@
 				uni.setStorageSync('currentSubject', 'chinese');
 				uni.showToast({
 					title: "汉字功能开发中",
-					icon:"none"
+					icon: "none"
 				});
 			},
 			// 英语
@@ -146,7 +141,7 @@
 		justify-content: space-between;
 		align-items: center;
 	}
-	
+
 	/* 左侧标题 */
 	.header-left {
 		flex: 1;
@@ -169,19 +164,19 @@
 		opacity: 0.95;
 		font-weight: 500;
 	}
-	
+
 	/* 右侧我的图标 */
 	.header-right {
 		width: 80rpx;
 		height: 80rpx;
-		background: rgba(255,255,255,0.3);
+		background: rgba(255, 255, 255, 0.3);
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border: 3rpx solid rgba(255,255,255,0.5);
+		border: 3rpx solid rgba(255, 255, 255, 0.5);
 	}
-	
+
 	.my-icon {
 		font-size: 40rpx;
 	}
@@ -253,7 +248,7 @@
 		align-items: center;
 		justify-content: center;
 		margin-right: 32rpx;
-		border: 4rpx solid rgba(255,255,255,0.5);
+		border: 4rpx solid rgba(255, 255, 255, 0.5);
 	}
 
 	.icon-emoji {
