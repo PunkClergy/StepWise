@@ -40,7 +40,6 @@
 				this.maxNum = "";
 			},
 			startMath() {
-			console.log(123)
 				const num = Number(this.maxNum);
 				if (!this.maxNum) {
 					uni.showModal({
@@ -59,8 +58,9 @@
 					return;
 				}
 				uni.setStorageSync('mathMaxNum', num);
+				// 修改为分包路由地址
 				uni.navigateTo({
-					url: `/pages/kidsMath/kidsMath?maxNum=${num}`
+					url: `/pages/sub-math/kidsMath?maxNum=${num}`
 				});
 			}
 		}

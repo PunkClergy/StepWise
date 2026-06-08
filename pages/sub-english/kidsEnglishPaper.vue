@@ -266,9 +266,11 @@ export default {
       this.initTest();
     },
 
-    // 返回上一页
+    // 返回首页（适配分包路由）
     goBack() {
-      uni.navigateBack();
+      uni.redirectTo({
+        url: "/pages/sub-english/kidsEnglish"
+      });
     }
   }
 };

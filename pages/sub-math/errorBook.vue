@@ -3,7 +3,7 @@
 		<!-- 顶部：标题 + 日期 左右布局 -->
 		<view class="header">
 			<text class="title">📕 错题本</text>
-			
+
 			<!-- 单个醒目日期选择框 选完自动搜索 -->
 			<picker mode="date" :value="selectDate" @change="onDateChange">
 				<view class="strong-picker">
@@ -133,7 +133,9 @@
 								this.uniqueList = [];
 								this.filteredList = [];
 								this.showList = [];
-								uni.showToast({ title: "清空成功" });
+								uni.showToast({
+									title: "清空成功"
+								});
 							} catch (e) {}
 						}
 					}

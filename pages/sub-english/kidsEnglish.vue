@@ -91,13 +91,13 @@
 			// 跳转测试页面
 			goTestPage() {
 				uni.navigateTo({
-					url: "/pages/kidsEnglishPaper/kidsEnglishPaper"
+					url: "/pages/sub-english/kidsEnglishPaper"
 				});
 			},
 			// 跳转错题本页面
 			goErrorBook() {
 				uni.navigateTo({
-					url: "/pages/errorBook/errorBook"
+					url: "/pages/sub-english/errorBook"
 				});
 			},
 

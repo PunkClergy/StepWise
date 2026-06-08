@@ -5,7 +5,7 @@
 			<view class="icon-btn left-icon" @click="goHome">
 				<text>🏠</text>
 			</view>
-			<view class="icon-btn right-icon" @click="toHistory">
+			<view class="icon-btn right-icon" @click="goErrorBook">
 				<text>📖</text>
 			</view>
 		</view>
@@ -33,7 +33,7 @@
 			<!-- <view class="next-btn" @click="createNewQuestion"><text class="next-text">➡️</text></view> -->
 		</view>
 
-		<view class="stat-box" @click="toHistory">
+		<view class="stat-box" @click="goErrorBook">
 			<text>📝：{{ totalCount }} | ✨ 答对：{{ rightCount }} | 🎯 正确率：{{ rateText }}</text>
 		</view>
 
@@ -207,9 +207,9 @@
 			/**
 			 * 跳转错题历史页面
 			 */
-			toHistory() {
+			goErrorBook() {
 				uni.navigateTo({
-					url: '/pages/history/history'
+					url: '/pages/sub-math/errorBook'
 				})
 			},
 			/**
@@ -341,7 +341,7 @@
 						} catch (e) {}
 						uni.setStorageSync('currentSubject', 'math');
 						uni.redirectTo({
-							url: '/pages/mathConfig/mathConfig'
+							url: '/pages/sub-math/mathConfig'
 						});
 					},
 					// 取消：记录当前总题数作为下次弹窗冷却起点

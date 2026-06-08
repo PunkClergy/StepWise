@@ -3,7 +3,7 @@
     <!-- 顶部导航 - 永久固定头部 -->
     <view class="top-wrap">
       <view class="back-btn" @click="goBack">← 返回</view>
-      <text class="title">错题本</text>
+      <text class="title">英语错题本</text>
       <view class="clear-btn" @click="clearErrorList">清空</view>
     </view>
 
@@ -185,11 +185,11 @@ page {
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--status-bar-height) + 20rpx) 30rpx 20rpx;
-  background: linear-gradient(to bottom, #fff5f7, #f0f9ff);
+  background: #fff9e6;
 }
 .back-btn, .clear-btn {
   font-size: 30rpx;
-  color: #ff6a8e;
+  color: #333;
 }
 .title {
   font-size: 36rpx;
@@ -231,7 +231,6 @@ page {
   margin-bottom: 20rpx;
   box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease;
-  /* 常规按压效果 */
 }
 .item:active {
   transform: scale(0.98);
