@@ -1,27 +1,30 @@
 <template>
 	<view class="home-page">
-		<!-- 🔔 自定义顶部头部 -->
-		<view class="custom-header">
-			<text class="header-title">口算小达人</text>
-			<text class="header-desc">快乐学习 · 轻松练习</text>
-		</view>
-
-		<!-- 数字输入区域 -->
-		<view class="input-wrap">
-			<text class="tip-text">请输入最大数字</text>
-			<view class="input-box">
-				<input class="num-input" type="number" v-model="maxNum" placeholder="例：输入10，生成10以内加减法" />
+		<!-- 内容容器：整体居中 -->
+		<view class="content-wrap">
+			<!-- 🔔 自定义顶部头部 -->
+			<view class="custom-header">
+				<text class="header-title">口算小达人</text>
+				<text class="header-desc">快乐学习 · 轻松练习</text>
 			</view>
-			<text class="range-desc">范围：5 ~ 1000 之间的整数</text>
-		</view>
 
-		<!-- 操作按钮 -->
-		<view class="btn-group">
-			<view class="start-btn" @click="startMath">
-				<text class="btn-text">开始练习</text>
+			<!-- 数字输入区域 -->
+			<view class="input-wrap">
+				<text class="tip-text">请输入最大数字</text>
+				<view class="input-box">
+					<input class="num-input" type="number" v-model="maxNum" placeholder="例：输入10，生成10以内加减法" />
+				</view>
+				<text class="range-desc">范围：5 ~ 1000 之间的整数</text>
 			</view>
-			<view class="clear-btn" @click="clearInput">
-				<text class="clear-text">清空输入</text>
+
+			<!-- 操作按钮 -->
+			<view class="btn-group">
+				<view class="start-btn" @click="startMath">
+					<text class="btn-text">开始练习</text>
+				</view>
+				<view class="clear-btn" @click="clearInput">
+					<text class="clear-text">清空输入</text>
+				</view>
 			</view>
 		</view>
 	</view>
@@ -58,7 +61,6 @@
 					return;
 				}
 				uni.setStorageSync('mathMaxNum', num);
-				// 修改为分包路由地址
 				uni.navigateTo({
 					url: `/pages/sub-math/kidsMath?maxNum=${num}`
 				});
@@ -68,28 +70,33 @@
 </script>
 
 <style scoped>
-	/* 全局盒模型防横向滚动，和首页统一 */
 	view,
 	text,
 	input {
 		box-sizing: border-box;
 	}
 
-	/* 页面整体：增加状态栏安全顶部内边距 */
+	/* 页面根容器：全屏 + 弹性布局，整体居中 */
 	.home-page {
 		min-height: 100vh;
 		width: 100%;
 		background: linear-gradient(180deg, #91d4ff 0%, #c7f0ff 45%, #b8f0a8 100%);
-		padding-top: 60rpx;
-		padding-left: 30rpx;
-		padding-right: 30rpx;
-		overflow-x: hidden;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
+		justify-content: center;
+		padding: 0 30rpx;
+		overflow-x: hidden;
 	}
 
-	/* 自定义头部：优化上下内边距，文字完整展示 */
+	/* 内容外层容器：左右最大宽度限制，内部垂直排布 */
+	.content-wrap {
+		width: 100%;
+		max-width: 640rpx;
+		display: flex;
+		flex-direction: column;
+	}
+
+	/* 自定义头部 */
 	.custom-header {
 		width: 100%;
 		background: linear-gradient(90deg, #87CEEB 0%, #98FB98 100%);
@@ -117,10 +124,9 @@
 		line-height: 1.2;
 	}
 
-	/* 输入卡片：统一首页大圆角、柔和阴影、浅蓝边框幼儿风 */
+	/* 输入卡片 */
 	.input-wrap {
 		width: 100%;
-		max-width: 640rpx;
 		background: #ffffff;
 		border-radius: 40rpx;
 		padding: 60rpx 40rpx;
@@ -148,7 +154,6 @@
 		transition: all 0.2s ease;
 	}
 
-	/* 输入框聚焦高亮，和首页柔和交互统一 */
 	.input-box:focus-within {
 		border-color: #87CEEB;
 		box-shadow: 0 0 0 6rpx rgba(135, 206, 235, 0.2);
@@ -170,13 +175,11 @@
 		line-height: 1.2;
 	}
 
-	/* 按钮容器：宽度限制和首页按钮一致 */
+	/* 按钮区域 */
 	.btn-group {
 		width: 100%;
-		max-width: 640rpx;
 	}
 
-	/* 开始按钮：复刻首页大圆角渐变、按压缩放动效、白色文字阴影 */
 	.start-btn {
 		width: 100%;
 		height: 100rpx;
@@ -204,7 +207,6 @@
 		line-height: 1.2;
 	}
 
-	/* 清空按钮：同步首页圆角、按压变色交互 */
 	.clear-btn {
 		width: 100%;
 		height: 100rpx;
