@@ -57,10 +57,11 @@
 				<text class="count-tag">{{ charErrorCount }} 道</text>
 				<view class="arrow">➡️</view>
 			</view>
-			<view class="func-item" @click="goErrorBook('pinyin')">
+			<!-- 原拼音错题 替换为 短句错题 -->
+			<view class="func-item" @click="goErrorBook('sentence')">
 				<view class="func-icon">📙</view>
-				<text class="func-name">拼音错题</text>
-				<text class="count-tag">{{ pinyinErrorCount }} 道</text>
+				<text class="func-name">短句错题</text>
+				<text class="count-tag">{{ sentenceErrorCount }} 道</text>
 				<view class="arrow">➡️</view>
 			</view>
 		</view>
@@ -98,14 +99,14 @@ const STORAGE_KEYS = {
 	en: 'en_test_error_word',
 	math: 'math_error_questions',
 	char: 'char_error_questions',
-	pinyin: 'pinyin_error_questions'
+	sentence: 'sentence_error_questions' // 新增短句错题存储key
 };
 
 const ROUTE_STRATEGY = {
 	en: '/pages/sub-english/errorBook',
 	math: '/pages/sub-math/errorBook',
 	char: '/pages/sub-chinese/errorBook',
-	pinyin: '/pages/sub-pinyin/errorBook'
+	sentence: '/pages/sub-sentence/errorBook' // 新增短句错题路由
 };
 
 const STAGE_LIST = [
@@ -128,7 +129,7 @@ export default {
 			enErrorCount: 0,
 			mathErrorCount: 0,
 			charErrorCount: 0,
-			pinyinErrorCount: 0
+			sentenceErrorCount: 0 // 新增短句错题数量
 		};
 	},
 	onLoad() {
@@ -145,13 +146,13 @@ export default {
 		calcSafeTop() {
 			const systemInfo = uni.getSystemInfoSync();
 
-			// ✅ App 端（无胶囊）
+			// App 端（无胶囊）
 			if (systemInfo.platform === 'android' || systemInfo.platform === 'ios') {
 				this.safeTop = systemInfo.statusBarHeight + 44;
 				return;
 			}
 
-			// ✅ 小程序端（有胶囊）
+			// 小程序端（有胶囊）
 			const menuButton = uni.getMenuButtonBoundingClientRect();
 			this.safeTop =
 				systemInfo.statusBarHeight +
@@ -163,13 +164,14 @@ export default {
 			this.enErrorCount = (uni.getStorageSync(STORAGE_KEYS.en) || []).length;
 			this.mathErrorCount = (uni.getStorageSync(STORAGE_KEYS.math) || []).length;
 			this.charErrorCount = (uni.getStorageSync(STORAGE_KEYS.char) || []).length;
-			this.pinyinErrorCount = (uni.getStorageSync(STORAGE_KEYS.pinyin) || []).length;
+			this.sentenceErrorCount = (uni.getStorageSync(STORAGE_KEYS.sentence) || []).length;
 
+			// 重新计算总错题数
 			this.totalError =
 				this.enErrorCount +
 				this.mathErrorCount +
 				this.charErrorCount +
-				this.pinyinErrorCount;
+				this.sentenceErrorCount;
 		},
 
 		changeStage(index) {
@@ -213,20 +215,10 @@ page {
 
 .page {
 	min-height: 100vh;
-	background: linear-gradient(to right, #ffd6e0, #f8e8f0);
+	/* 全局低饱和护眼绿渐变背景 */
+	background: linear-gradient(to bottom, #f5f9f4, #edf4f2);
 	padding-bottom: 130rpx;
 	box-sizing: border-box;
-}
-
-/* 顶部标题 */
-.header-title-bar {
-	padding: 20rpx 30rpx 10rpx;
-}
-
-.header-title {
-	font-size: 36rpx;
-	font-weight: bold;
-	color: #ff6a8e;
 }
 
 /* 用户卡片 */
@@ -235,7 +227,8 @@ page {
 	background: #fff;
 	border-radius: 30rpx;
 	padding: 35rpx;
-	box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
+	/* 护眼绿色柔和阴影 */
+	box-shadow: 0 6rpx 18rpx rgba(86, 160, 113, 0.12);
 	display: flex;
 	align-items: center;
 }
@@ -244,7 +237,7 @@ page {
 	width: 120rpx;
 	height: 120rpx;
 	border-radius: 50%;
-	background: #ffeef3;
+	background: #f0f7f3;
 	font-size: 60rpx;
 	display: flex;
 	align-items: center;
@@ -259,14 +252,14 @@ page {
 .username {
 	font-size: 38rpx;
 	font-weight: bold;
-	color: #333;
+	color: #3a6b54;
 	display: block;
 	margin-bottom: 10rpx;
 }
 
 .desc {
 	font-size: 28rpx;
-	color: #999;
+	color: #607069;
 }
 
 /* 统计卡片 */
@@ -277,11 +270,11 @@ page {
 	padding: 30rpx 20rpx;
 	display: flex;
 	justify-content: space-around;
-	box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
+	box-shadow: 0 6rpx 18rpx rgba(86, 160, 113, 0.12);
 }
 
 .stage-wrap {
-	background: #fef2f6;
+	background: #f0f7f3;
 	padding: 0rpx 50rpx;
 	border-radius: 40rpx;
 	display: flex;
@@ -290,12 +283,12 @@ page {
 
 .stage-text {
 	font-size: 30rpx;
-	color: #ff6a8e;
+	color: #56a071;
 }
 
 .stage-arrow {
 	font-size: 24rpx;
-	color: #ff6a8e;
+	color: #56a071;
 	margin-left: 8rpx;
 }
 
@@ -308,15 +301,15 @@ page {
 .num {
 	font-size: 44rpx;
 	font-weight: bold;
-	color: #ff6a8e;
+	color: #56a071;
 }
 
 .label {
 	font-size: 28rpx;
-	color: #666;
+	color: #607069;
 }
 
-/* 弹窗 */
+/* 阶段选择弹窗 */
 .stage-pop {
 	position: fixed;
 	inset: 0;
@@ -340,11 +333,12 @@ page {
 	text-align: center;
 	font-size: 32rpx;
 	border-bottom: 1rpx solid #eee;
+	color: #333;
 }
 
 .pop-item.active {
-	background: #fef2f6;
-	color: #ff6a8e;
+	background: #f0f7f3;
+	color: #56a071;
 	font-weight: bold;
 }
 
@@ -354,7 +348,7 @@ page {
 	background: #fff;
 	border-radius: 30rpx;
 	overflow: hidden;
-	box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
+	box-shadow: 0 6rpx 18rpx rgba(86, 160, 113, 0.12);
 }
 
 .func-item {
@@ -366,7 +360,7 @@ page {
 }
 
 .func-item:active {
-	background: #fef2f6;
+	background: #f0f7f3;
 }
 
 .func-icon {
@@ -384,7 +378,7 @@ page {
 
 .count-tag {
 	font-size: 28rpx;
-	color: #ff6a8e;
+	color: #56a071;
 	margin-right: 20rpx;
 }
 
@@ -393,7 +387,7 @@ page {
 	color: #ccc;
 }
 
-/* TabBar */
+/* 底部 TabBar */
 .custom-tabbar {
 	position: fixed;
 	left: 0;
@@ -404,7 +398,7 @@ page {
 	display: flex;
 	justify-content: space-around;
 	align-items: center;
-	box-shadow: 0 -6rpx 20rpx rgba(0, 0, 0, 0.08);
+	box-shadow: 0 -6rpx 20rpx rgba(86, 160, 113, 0.08);
 	z-index: 999;
 }
 
@@ -421,6 +415,6 @@ page {
 }
 
 .tab-item.active {
-	color: #ff6a8e;
+	color: #56a071;
 }
 </style>

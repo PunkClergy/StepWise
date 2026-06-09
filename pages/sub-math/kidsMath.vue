@@ -90,64 +90,64 @@
 					[{
 							val: '1',
 							icon: '1️',
-							class: 'pink-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 						{
 							val: '2',
 							icon: '2️',
-							class: 'pink-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 						{
 							val: '3',
 							icon: '3️',
-							class: 'pink-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 					],
 					[{
 							val: '4',
 							icon: '4️',
-							class: 'pink-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 						{
 							val: '5',
 							icon: '5️',
-							class: 'pink-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 						{
 							val: '6',
 							icon: '6️',
-							class: 'pink-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 					],
 					[{
 							val: '7',
 							icon: '7️',
-							class: 'blue-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 						{
 							val: '8',
 							icon: '8️',
-							class: 'blue-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 						{
 							val: '9',
 							icon: '9️',
-							class: 'blue-key',
+							class: 'num-key',
 							click: this.selectNum
 						},
 					],
 					[{
 							val: '0',
 							icon: '0️',
-							class: 'blue-key zero-key',
+							class: 'num-key zero-key',
 							click: this.selectNum
 						},
 						{
@@ -507,8 +507,12 @@
 </script>
 
 <style scoped>
+	math-page {
+		box-sizing: border-box;
+	}
 	.math-page {
-		background: linear-gradient(180deg, #fff9e6 0%, #fffdf5 100%);
+		/* 全局统一护眼浅绿渐变，和项目所有页面保持一致 */
+		background: linear-gradient(180deg, #f5f9f4 0%, #edf4f2 100%);
 		min-height: 100vh;
 		padding: 50rpx 30rpx;
 		box-sizing: border-box;
@@ -532,11 +536,14 @@
 		height: 72rpx;
 		border-radius: 50%;
 		background: rgba(255, 255, 255, 0.92);
-		box-shadow: 0 3rpx 9rpx rgba(0, 0, 0, 0.1);
+		box-shadow: 0 3rpx 9rpx rgba(86, 160, 113, 0.12);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-size: 36rpx;
+	}
+	.icon-btn:active {
+		transform: scale(0.95);
 	}
 
 	.question-box {
@@ -544,13 +551,13 @@
 		border-radius: 40rpx;
 		padding: 40rpx 30rpx;
 		margin: 120rpx 0;
-		box-shadow: 0 8rpx 20rpx rgba(255, 200, 200, 0.15);
+		box-shadow: 0 8rpx 20rpx rgba(86, 160, 113, 0.12);
 	}
 
 	.question-text {
 		font-size: 100rpx;
 		text-align: center;
-		color: #5c3a21;
+		color: #2d3742;
 		font-weight: bold;
 	}
 
@@ -559,7 +566,7 @@
 		text-align: center;
 		font-size: 45rpx;
 		font-weight: bold;
-		color: #5c3a21;
+		color: #3a4742;
 	}
 
 	.ans-num {
@@ -571,7 +578,7 @@
 		text-align: center;
 		margin: 20rpx 0;
 		font-size: 34rpx;
-		color: #8a6a3d;
+		color: #55635d;
 	}
 
 	.num-keyboard {
@@ -593,23 +600,30 @@
 		justify-content: center;
 		background: #fff;
 		font-size: 40rpx;
+		box-shadow: 0 4rpx 10rpx rgba(86, 160, 113, 0.08);
+		/* 新增：点击过渡动画 */
+		transition: transform 0.15s ease, background-color 0.15s ease;
+	}
+	/* 数字按键点击按压效果 */
+	.key:active {
+		transform: scale(0.94);
+		background-color: #e6edea;
 	}
 
-	.pink-key {
-		background: #ffebf0;
-	}
-
-	.blue-key {
-		background: #e6f7ff;
+	.num-key {
+		background: #f8faf9;
+		color: #2d3742;
 	}
 
 	.clear-key {
-		background: #f0f8f0 !important;
+		background: #e6edea !important;
+		color: #55635d;
 	}
 
 	.submit-wrap {
 		display: flex;
 		gap: 25rpx;
+		margin-top: 20rpx;
 	}
 
 	.submit-btn,
@@ -625,7 +639,7 @@
 
 	.submit-btn {
 		flex: 2;
-		background: linear-gradient(90deg, #8bd68f, #66bb6a);
+		background: linear-gradient(90deg, #87b99c, #56a071);
 	}
 
 	.pulse-btn {
@@ -636,11 +650,9 @@
 		0% {
 			transform: scale(1);
 		}
-
 		50% {
 			transform: scale(1.08);
 		}
-
 		100% {
 			transform: scale(1);
 		}
@@ -648,7 +660,7 @@
 
 	.next-btn {
 		flex: 1;
-		background: linear-gradient(90deg, #b3d8f7, #8cc8f7);
+		background: linear-gradient(90deg, #a1c9b4, #79a88c);
 	}
 
 	.modal-mask {
@@ -675,6 +687,16 @@
 	.modal-icon {
 		font-size: 120rpx;
 	}
+	.modal-title {
+		font-size: 38rpx;
+		color: #2d3742;
+		margin-top: 20rpx;
+	}
+	.modal-content {
+		font-size: 32rpx;
+		color: #55635d;
+		margin-top: 15rpx;
+	}
 
 	.modal-btns {
 		display: flex;
@@ -693,13 +715,13 @@
 	}
 
 	.modal-confirm {
-		background: #ffb742;
+		background: linear-gradient(90deg, #87b99c, #56a071);
 		color: #fff;
 	}
 
 	.modal-cancel {
-		background: #f5f5f5;
-		color: #666;
+		background: #f1f5f3;
+		color: #55635d;
 	}
 
 	/* 答对全屏遮罩 */
@@ -718,7 +740,7 @@
 
 	.right-tip-content {
 		padding: 30rpx 60rpx;
-		background: rgba(0, 0, 0, 0.7);
+		background: rgba86, 160, 113, 0.85);
 		color: #fff;
 		font-size: 36rpx;
 		border-radius: 20rpx;

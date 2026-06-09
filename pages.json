@@ -83,10 +83,17 @@
 					"navigationBarBackgroundColor": "#fff9e6",
 					"navigationBarTitleText": "我的错题本"
 				}
-			}]
+			},
+			{
+				"path": "kidsChinese",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			}
+		]
 		},
 		{
-			"root": "pages/sub-pinyin",
+			"root": "pages/sub-sentence",
 			"pages": [{
 				"path": "errorBook",
 				"style": {
@@ -95,7 +102,7 @@
 				}
 			},
 			{
-				"path": "kidsPinyin",
+				"path": "kidsSentence",
 				"style": {
 					"navigationBarTitleText": ""
 				}
