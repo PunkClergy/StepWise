@@ -110,6 +110,8 @@
 		padding: calc(var(--status-bar-height) + 40rpx) 30rpx 150rpx;
 		display: flex;
 		flex-direction: column;
+		/* 核心修复：解决 passive 警告，保留点击、按压动效 */
+		touch-action: manipulation;
 	}
 
 	/* 顶部头部 */
