@@ -30,19 +30,11 @@
 
 		<!-- 底部 TabBar -->
 		<view class="bottom-tabbar">
-			<view
-				class="tab-item"
-				:class="{ active: tabIndex === 0 }"
-				@click="switchTab(0)"
-			>
+			<view class="tab-item" :class="{ active: tabIndex === 0 }" @click="switchTab(0)">
 				<text class="tab-icon">🏠</text>
 				<text class="tab-text">首页</text>
 			</view>
-			<view
-				class="tab-item"
-				:class="{ active: tabIndex === 1 }"
-				@click="switchTab(1)"
-			>
+			<view class="tab-item" :class="{ active: tabIndex === 1 }" @click="switchTab(1)">
 				<text class="tab-icon">👤</text>
 				<text class="tab-text">我的</text>
 			</view>
@@ -51,165 +43,176 @@
 </template>
 
 <script>
-export default {
-	data() {
-		return {
-			tabIndex: 0
-		};
-	},
-	onLoad() {
-		const subject = uni.getStorageSync('currentSubject');
-		const mathMaxNum = uni.getStorageSync('mathMaxNum');
-		if (subject === 'math' && mathMaxNum) {
-			uni.redirectTo({
-				url: `/pages/sub-math/kidsMath?maxNum=${mathMaxNum}`
-			});
-		}
-	},
-	methods: {
-		switchTab(index) {
-			this.tabIndex = index;
-			if (index === 1) {
-				uni.reLaunch({
-					url: '/pages/sub-user/MyCenter'
+	export default {
+		data() {
+			return {
+				tabIndex: 0
+			};
+		},
+		onLoad() {
+			const subject = uni.getStorageSync('currentSubject');
+			const mathMaxNum = uni.getStorageSync('mathMaxNum');
+			if (subject === 'math' && mathMaxNum) {
+				uni.redirectTo({
+					url: `/pages/sub-math/kidsMath?maxNum=${mathMaxNum}`
 				});
 			}
 		},
-		goMath() {
-			uni.setStorageSync('currentSubject', 'math');
-			uni.navigateTo({
-				url: '/pages/sub-math/mathConfig'
-			});
-		},
-		goPinyin() {
-			uni.setStorageSync('currentSubject', 'pinyin');
-			uni.showToast({
-				title: '拼音功能开发中',
-				icon: 'none'
-			});
-		},
-		goChinese() {
-			uni.setStorageSync('currentSubject', 'chinese');
-			uni.showToast({
-				title: '汉字功能开发中',
-				icon: 'none'
-			});
-		},
-		goEnglish() {
-			uni.setStorageSync('currentSubject', 'english');
-			uni.navigateTo({
-				url: '/pages/sub-english/kidsEnglish'
-			});
+		methods: {
+			switchTab(index) {
+				this.tabIndex = index;
+				if (index === 1) {
+					uni.reLaunch({
+						url: '/pages/sub-user/MyCenter'
+					});
+				}
+			},
+			goMath() {
+				uni.setStorageSync('currentSubject', 'math');
+				uni.navigateTo({
+					url: '/pages/sub-math/mathConfig'
+				});
+			},
+			goPinyin() {
+				uni.setStorageSync('currentSubject', 'pinyin');
+				uni.navigateTo({
+					url: '/pages/sub-pinyin/kidsPinyin'
+				});
+			},
+			goChinese() {
+				uni.setStorageSync('currentSubject', 'chinese');
+				uni.showToast({
+					title: '汉字功能开发中',
+					icon: 'none'
+				});
+			},
+			goEnglish() {
+				uni.setStorageSync('currentSubject', 'english');
+				uni.navigateTo({
+					url: '/pages/sub-english/kidsEnglish'
+				});
+			}
 		}
-	}
-};
+	};
 </script>
 
 <style scoped>
-view,
-text {
-	box-sizing: border-box;
-	-webkit-tap-highlight-color: transparent;
-}
+	view,
+	text {
+		box-sizing: border-box;
+		-webkit-tap-highlight-color: transparent;
+	}
 
-.index-page {
-	min-height: 100vh;
-	background: linear-gradient(180deg, #fef2f6 0%, #e8f8ff 100%);
-	padding: 70rpx 30rpx 140rpx; /* 给 TabBar 留空间 */
-	display: flex;
-	flex-direction: column;
-}
+	.index-page {
+		min-height: 100vh;
+		background: linear-gradient(180deg, #fef2f6 0%, #e8f8ff 100%);
+		padding: 70rpx 30rpx 140rpx;
+		/* 给 TabBar 留空间 */
+		display: flex;
+		flex-direction: column;
+	}
 
-/* 顶部头部 */
-.custom-header {
-	margin-bottom: 60rpx;
-}
+	/* 顶部头部 */
+	.custom-header {
+		margin-bottom: 60rpx;
+	}
 
-.header-title {
-	font-size: 48rpx;
-	font-weight: bold;
-	color: #ff6a8e;
-}
+	.header-title {
+		font-size: 48rpx;
+		font-weight: bold;
+		color: #ff6a8e;
+	}
 
-.header-sub {
-	font-size: 28rpx;
-	color: #999;
-	margin-top: 12rpx;
-	display: block;
-}
+	.header-sub {
+		font-size: 28rpx;
+		color: #999;
+		margin-top: 12rpx;
+		display: block;
+	}
 
-/* 科目卡片 */
-.subject-wrap {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 20rpx;
-}
+	/* 科目卡片 */
+	.subject-wrap {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20rpx;
+	}
 
-.subject-item {
-	width: 48.5%;
-	height: 260rpx;
-	background: #fff;
-	border-radius: 32rpx;
-	box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.08);
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-}
+	.subject-item {
+		width: 48.5%;
+		height: 260rpx;
+		background: #fff;
+		border-radius: 32rpx;
+		box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.08);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
 
-.subject-item:active {
-	transform: scale(0.96);
-}
+	.subject-item:active {
+		transform: scale(0.96);
+	}
 
-.item-icon {
-	width: 120rpx;
-	height: 120rpx;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 60rpx;
-	margin-bottom: 24rpx;
-}
+	.item-icon {
+		width: 120rpx;
+		height: 120rpx;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 60rpx;
+		margin-bottom: 24rpx;
+	}
 
-.item-icon.math { background: #fff3cd; }
-.item-icon.pinyin { background: #e1f5fe; }
-.item-icon.chinese { background: #fce4ec; }
-.item-icon.english { background: #e8f5e9; }
+	.item-icon.math {
+		background: #fff3cd;
+	}
 
-.item-name {
-	font-size: 34rpx;
-	font-weight: 500;
-	color: #333;
-}
+	.item-icon.pinyin {
+		background: #e1f5fe;
+	}
 
-/* 底部 TabBar */
-.bottom-tabbar {
-	position: fixed;
-	left: 0;
-	bottom: 0;
-	width: 100%;
-	height: 110rpx;
-	background: #fff;
-	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
-}
+	.item-icon.chinese {
+		background: #fce4ec;
+	}
 
-.tab-item {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	color: #999;
-	font-size: 22rpx;
-}
+	.item-icon.english {
+		background: #e8f5e9;
+	}
 
-.tab-icon {
-	font-size: 44rpx;
-}
+	.item-name {
+		font-size: 34rpx;
+		font-weight: 500;
+		color: #333;
+	}
 
-.tab-item.active {
-	color: #ff6a8e;
-}
+	/* 底部 TabBar */
+	.bottom-tabbar {
+		position: fixed;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		height: 110rpx;
+		background: #fff;
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+	}
+
+	.tab-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		color: #999;
+		font-size: 22rpx;
+	}
+
+	.tab-icon {
+		font-size: 44rpx;
+	}
+
+	.tab-item.active {
+		color: #ff6a8e;
+	}
 </style>
