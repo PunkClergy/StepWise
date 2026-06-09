@@ -1,15 +1,5 @@
 <template>
-	<view class="page">
-		<!-- 自定义顶部导航（兼容状态栏） -->
-		<view class="custom-header">
-			<view class="header-content">
-				<view class="icon-btn" @click="goBack">🔙</view>
-				<text class="header-title">个人中心</text>
-			</view>
-		</view>
-
-		<!-- 头部占位，防止内容被导航遮挡 -->
-		<view class="header-placeholder"></view>
+	<view class="page" :style="{ paddingTop: safeTop + 'px' }">
 
 		<!-- 头像+昵称区域 -->
 		<view class="user-card">
@@ -20,7 +10,7 @@
 			</view>
 		</view>
 
-		<!-- 数据统计卡片：阶段 + 总错题 横向排列 -->
+		<!-- 数据统计卡片 -->
 		<view class="stat-card">
 			<view class="stage-wrap" @click="showStagePop = true">
 				<text class="stage-text">{{ stageList[curStage].name }}</text>
@@ -35,8 +25,13 @@
 		<!-- 阶段选择弹窗 -->
 		<view class="stage-pop" v-if="showStagePop" @click="showStagePop = false">
 			<view class="pop-content" @click.stop>
-				<view class="pop-item" :class="{active: curStage === index}" v-for="(item, index) in stageList"
-					:key="index" @click="changeStage(index)">
+				<view
+					class="pop-item"
+					:class="{ active: curStage === index }"
+					v-for="(item, index) in stageList"
+					:key="index"
+					@click="changeStage(index)"
+				>
 					{{ item.name }}
 				</view>
 			</view>
@@ -70,8 +65,8 @@
 			</view>
 		</view>
 
-		<!-- 其他功能列表 -->
-		<view class="func-list" style="margin-top:20rpx;">
+		<!-- 其他功能 -->
+		<view class="func-list" style="margin-top: 20rpx;">
 			<view class="func-item" @click="goSetting">
 				<view class="func-icon">⚙️</view>
 				<text class="func-name">设置</text>
@@ -84,375 +79,348 @@
 			</view>
 		</view>
 
-		<!-- 底部标语 -->
-		<view class="footer">
-			<text class="footer-text">趣味学习 · 快乐成长</text>
+		<!-- 底部 TabBar -->
+		<view class="custom-tabbar">
+			<view class="tab-item" :class="{ active: tabIndex === 0 }" @click="switchTab(0)">
+				<text class="tab-icon">🏠</text>
+				<text class="tab-text">首页</text>
+			</view>
+			<view class="tab-item" :class="{ active: tabIndex === 1 }" @click="switchTab(1)">
+				<text class="tab-icon">👤</text>
+				<text class="tab-text">我的</text>
+			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-	// 各科目错题存储 key（按阶段区分）
-	const STORAGE_KEYS = {
-		en: 'en_test_error_word',
-		math: 'math_error_questions',
-		char: 'char_error_questions',
-		pinyin: 'pinyin_error_questions'
-	}
+const STORAGE_KEYS = {
+	en: 'en_test_error_word',
+	math: 'math_error_questions',
+	char: 'char_error_questions',
+	pinyin: 'pinyin_error_questions'
+};
 
-	// 策略模式：科目 -> 对应错题本路由
-	const ROUTE_STRATEGY = {
-		en: '/pages/sub-english/errorBook',
-		math: '/pages/sub-math/errorBook',
-		char: '/pages/sub-chinese/errorBook',
-		pinyin: '/pages/sub-pinyin/errorBook'
-	}
+const ROUTE_STRATEGY = {
+	en: '/pages/sub-english/errorBook',
+	math: '/pages/sub-math/errorBook',
+	char: '/pages/sub-chinese/errorBook',
+	pinyin: '/pages/sub-pinyin/errorBook'
+};
 
-	// 阶段列表
-	const STAGE_LIST = [{
-			id: 0,
-			name: '幼儿园'
-		},
-		{
-			id: 1,
-			name: '一年级'
-		},
-		{
-			id: 2,
-			name: '二年级'
+const STAGE_LIST = [
+	{ id: 0, name: '幼儿园' },
+	{ id: 1, name: '一年级' },
+	{ id: 2, name: '二年级' }
+];
+
+const STAGE_STORAGE_KEY = 'user_current_stage';
+
+export default {
+	data() {
+		return {
+			safeTop: 0,
+			tabIndex: 1,
+			stageList: STAGE_LIST,
+			curStage: 0,
+			showStagePop: false,
+			totalError: 0,
+			enErrorCount: 0,
+			mathErrorCount: 0,
+			charErrorCount: 0,
+			pinyinErrorCount: 0
+		};
+	},
+	onLoad() {
+		this.calcSafeTop();
+	},
+	onShow() {
+		const stage = uni.getStorageSync(STAGE_STORAGE_KEY);
+		if (stage !== '' && stage != null) {
+			this.curStage = Number(stage);
 		}
-	]
-	// 阶段本地存储key
-	const STAGE_STORAGE_KEY = 'user_current_stage'
+		this.initUserData();
+	},
+	methods: {
+		calcSafeTop() {
+			const systemInfo = uni.getSystemInfoSync();
 
-	export default {
-		data() {
-			return {
-				// 阶段相关
-				stageList: STAGE_LIST,
-				curStage: 0,
-				showStagePop: false,
-
-				totalError: 0,
-				// 各科错题数量
-				enErrorCount: 0,
-				mathErrorCount: 0,
-				charErrorCount: 0,
-				pinyinErrorCount: 0
+			// ✅ App 端（无胶囊）
+			if (systemInfo.platform === 'android' || systemInfo.platform === 'ios') {
+				this.safeTop = systemInfo.statusBarHeight + 44;
+				return;
 			}
+
+			// ✅ 小程序端（有胶囊）
+			const menuButton = uni.getMenuButtonBoundingClientRect();
+			this.safeTop =
+				systemInfo.statusBarHeight +
+				menuButton.height +
+				12;
 		},
-		onShow() {
-			// 读取当前阶段
-			const stage = uni.getStorageSync(STAGE_STORAGE_KEY)
-			if (stage !== '' && stage != null) {
-				this.curStage = Number(stage)
-			}
+
+		initUserData() {
+			this.enErrorCount = (uni.getStorageSync(STORAGE_KEYS.en) || []).length;
+			this.mathErrorCount = (uni.getStorageSync(STORAGE_KEYS.math) || []).length;
+			this.charErrorCount = (uni.getStorageSync(STORAGE_KEYS.char) || []).length;
+			this.pinyinErrorCount = (uni.getStorageSync(STORAGE_KEYS.pinyin) || []).length;
+
+			this.totalError =
+				this.enErrorCount +
+				this.mathErrorCount +
+				this.charErrorCount +
+				this.pinyinErrorCount;
+		},
+
+		changeStage(index) {
+			this.curStage = index;
+			this.showStagePop = false;
+			uni.setStorageSync(STAGE_STORAGE_KEY, index);
 			this.initUserData();
 		},
-		methods: {
-			// 按阶段拼接真实缓存key（隔离不同阶段数据）
-			getRealKey(originKey) {
-				return `${originKey}_stage_${this.curStage}`
-			},
 
-			initUserData() {
-				const enKey = this.getRealKey(STORAGE_KEYS.en)
-				const mathKey = this.getRealKey(STORAGE_KEYS.math)
-				const charKey = this.getRealKey(STORAGE_KEYS.char)
-				const pinyinKey = this.getRealKey(STORAGE_KEYS.pinyin)
+		goErrorBook(type) {
+			const url = ROUTE_STRATEGY[type];
+			uni.navigateTo({
+				url: `${url}?type=${type}&stage=${this.curStage}`
+			});
+		},
 
-				let enList = uni.getStorageSync(enKey) || [];
-				let mathList = uni.getStorageSync(mathKey) || [];
-				let charList = uni.getStorageSync(charKey) || [];
-				let pinyinList = uni.getStorageSync(pinyinKey) || [];
+		goSetting() {
+			uni.showToast({ title: '功能开发中', icon: 'none' });
+		},
 
-				this.enErrorCount = enList.length;
-				this.mathErrorCount = mathList.length;
-				this.charErrorCount = charList.length;
-				this.pinyinErrorCount = pinyinList.length;
+		goAbout() {
+			uni.showToast({ title: '功能开发中', icon: 'none' });
+		},
 
-				// 计算当前阶段总错题数
-				this.totalError = this.enErrorCount + this.mathErrorCount + this.charErrorCount + this.pinyinErrorCount;
-			},
-
-			// 切换阶段
-			changeStage(index) {
-				this.curStage = index
-				this.showStagePop = false
-				// 持久化阶段
-				uni.setStorageSync(STAGE_STORAGE_KEY, index)
-				// 重新加载当前阶段错题数据
-				this.initUserData()
-			},
-
-			goBack() {
-				uni.navigateBack();
-			},
-			// 策略模式分发路由跳转，携带阶段参数
-			goErrorBook(type) {
-				const targetUrl = ROUTE_STRATEGY[type] || '/pages/sub-english/errorBook';
-				uni.navigateTo({
-					url: `${targetUrl}?type=${type}&stage=${this.curStage}`
-				})
-			},
-			goSetting() {
-				uni.showToast({
-					title: '功能开发中',
-					icon: 'none'
-				})
-			},
-			goAbout() {
-				uni.showToast({
-					title: '功能开发中',
-					icon: 'none'
-				})
+		switchTab(index) {
+			this.tabIndex = index;
+			if (index === 0) {
+				uni.reLaunch({
+					url: '/pages/index/index'
+				});
 			}
 		}
 	}
+};
 </script>
 
 <style scoped>
-	page {
-		navigation-bar-hidden: true;
-	}
+page {
+	navigation-bar-hidden: true;
+}
 
-	.page {
-		min-height: 100vh;
-		box-sizing: border-box;
-		background: linear-gradient(to right, #ffd6e0, #f8e8f0);
-	}
+.page {
+	min-height: 100vh;
+	background: linear-gradient(to right, #ffd6e0, #f8e8f0);
+	padding-bottom: 130rpx;
+	box-sizing: border-box;
+}
 
-	/* 自定义头部 */
-	.custom-header {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		padding-top: var(--status-bar-height);
-		z-index: 999;
-	}
+/* 顶部标题 */
+.header-title-bar {
+	padding: 20rpx 30rpx 10rpx;
+}
 
-	.header-content {
-		height: 96rpx;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0 30rpx;
-	}
+.header-title {
+	font-size: 36rpx;
+	font-weight: bold;
+	color: #ff6a8e;
+}
 
-	.header-placeholder {
-		height: calc(var(--status-bar-height) + 96rpx);
-	}
+/* 用户卡片 */
+.user-card {
+	margin: 20rpx 30rpx;
+	background: #fff;
+	border-radius: 30rpx;
+	padding: 35rpx;
+	box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
+	display: flex;
+	align-items: center;
+}
 
-	.icon-btn {
-		width: 72rpx;
-		height: 72rpx;
-		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.85);
-		box-shadow: 0 3rpx 9rpx rgba(0, 0, 0, 0.1);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 38rpx;
-	}
+.avatar {
+	width: 120rpx;
+	height: 120rpx;
+	border-radius: 50%;
+	background: #ffeef3;
+	font-size: 60rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 30rpx;
+}
 
-	.icon-btn:active {
-		transform: scale(0.95);
-	}
+.user-info {
+	flex: 1;
+}
 
-	.header-title {
-		font-size: 36rpx;
-		font-weight: bold;
-		color: #ff6a8e;
-	}
+.username {
+	font-size: 38rpx;
+	font-weight: bold;
+	color: #333;
+	display: block;
+	margin-bottom: 10rpx;
+}
 
-	/* 用户卡片 */
-	.user-card {
-		margin: 20rpx 30rpx;
-		background: #ffffff;
-		border-radius: 30rpx;
-		padding: 35rpx;
-		box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
-		display: flex;
-		align-items: center;
-	}
+.desc {
+	font-size: 28rpx;
+	color: #999;
+}
 
-	.avatar {
-		width: 120rpx;
-		height: 120rpx;
-		border-radius: 50%;
-		background: #ffeef3;
-		font-size: 60rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-right: 30rpx;
-	}
+/* 统计卡片 */
+.stat-card {
+	margin: 0 30rpx 20rpx;
+	background: #fff;
+	border-radius: 30rpx;
+	padding: 30rpx 20rpx;
+	display: flex;
+	justify-content: space-around;
+	box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
+}
 
-	.user-info {
-		flex: 1;
-	}
+.stage-wrap {
+	background: #fef2f6;
+	padding: 0rpx 50rpx;
+	border-radius: 40rpx;
+	display: flex;
+	align-items: center;
+}
 
-	.username {
-		font-size: 38rpx;
-		font-weight: bold;
-		color: #333;
-		display: block;
-		margin-bottom: 10rpx;
-	}
+.stage-text {
+	font-size: 30rpx;
+	color: #ff6a8e;
+}
 
-	.desc {
-		font-size: 28rpx;
-		color: #999;
-	}
+.stage-arrow {
+	font-size: 24rpx;
+	color: #ff6a8e;
+	margin-left: 8rpx;
+}
 
-	/* 统计卡片：横向布局 */
-	.stat-card {
-		margin: 0 30rpx 20rpx;
-		background: #fff;
-		border-radius: 30rpx;
-		padding: 30rpx 20rpx;
-		box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		justify-content: space-around;
-	}
+.stat-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 
-	/* 阶段选择 */
-	.stage-wrap {
-		display: flex;
-		align-items: center;
-		padding: 8rpx 20rpx;
-		background: #fef2f6;
-		border-radius: 40rpx;
-	}
+.num {
+	font-size: 44rpx;
+	font-weight: bold;
+	color: #ff6a8e;
+}
 
-	.stage-text {
-		font-size: 30rpx;
-		color: #ff6a8e;
-	}
+.label {
+	font-size: 28rpx;
+	color: #666;
+}
 
-	.stage-arrow {
-		font-size: 24rpx;
-		color: #ff6a8e;
-		margin-left: 8rpx;
-	}
+/* 弹窗 */
+.stage-pop {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.3);
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
 
-	.stat-item {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
+.pop-content {
+	width: 500rpx;
+	background: #fff;
+	border-radius: 20rpx;
+	overflow: hidden;
+}
 
-	.num {
-		font-size: 44rpx;
-		font-weight: bold;
-		color: #ff6a8e;
-		margin-bottom: 8rpx;
-	}
+.pop-item {
+	height: 90rpx;
+	line-height: 90rpx;
+	text-align: center;
+	font-size: 32rpx;
+	border-bottom: 1rpx solid #eee;
+}
 
-	.label {
-		font-size: 28rpx;
-		color: #666;
-	}
+.pop-item.active {
+	background: #fef2f6;
+	color: #ff6a8e;
+	font-weight: bold;
+}
 
-	/* 阶段弹窗 */
-	.stage-pop {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.3);
-		z-index: 1000;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
+/* 功能列表 */
+.func-list {
+	margin: 0 30rpx;
+	background: #fff;
+	border-radius: 30rpx;
+	overflow: hidden;
+	box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
+}
 
-	.pop-content {
-		width: 500rpx;
-		background: #fff;
-		border-radius: 20rpx;
-		overflow: hidden;
-	}
+.func-item {
+	height: 100rpx;
+	display: flex;
+	align-items: center;
+	padding: 0 30rpx;
+	border-bottom: 1rpx solid #f5f5f5;
+}
 
-	.pop-item {
-		height: 90rpx;
-		line-height: 90rpx;
-		text-align: center;
-		font-size: 32rpx;
-		border-bottom: 1rpx solid #eee;
-	}
+.func-item:active {
+	background: #fef2f6;
+}
 
-	.pop-item:last-child {
-		border-bottom: none;
-	}
+.func-icon {
+	font-size: 40rpx;
+	margin-right: 25rpx;
+	width: 50rpx;
+	text-align: center;
+}
 
-	.pop-item.active {
-		background: #fef2f6;
-		color: #ff6a8e;
-		font-weight: bold;
-	}
+.func-name {
+	flex: 1;
+	font-size: 32rpx;
+	color: #333;
+}
 
-	/* 功能列表 */
-	.func-list {
-		margin: 0 30rpx;
-		background: #fff;
-		border-radius: 30rpx;
-		overflow: hidden;
-		box-shadow: 0 6rpx 18rpx rgba(255, 140, 180, 0.12);
-	}
+.count-tag {
+	font-size: 28rpx;
+	color: #ff6a8e;
+	margin-right: 20rpx;
+}
 
-	.func-item {
-		height: 100rpx;
-		display: flex;
-		align-items: center;
-		padding: 0 30rpx;
-		border-bottom: 1rpx solid #f5f5f5;
-	}
+.arrow {
+	font-size: 30rpx;
+	color: #ccc;
+}
 
-	.func-item:last-child {
-		border-bottom: none;
-	}
+/* TabBar */
+.custom-tabbar {
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	height: 110rpx;
+	background: #fff;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	box-shadow: 0 -6rpx 20rpx rgba(0, 0, 0, 0.08);
+	z-index: 999;
+}
 
-	.func-item:active {
-		background: #fef2f6;
-	}
+.tab-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	color: #999;
+	font-size: 22rpx;
+}
 
-	.func-icon {
-		font-size: 40rpx;
-		margin-right: 25rpx;
-		width: 50rpx;
-		text-align: center;
-	}
+.tab-icon {
+	font-size: 44rpx;
+}
 
-	.func-name {
-		flex: 1;
-		font-size: 32rpx;
-		color: #333;
-	}
-
-	.count-tag {
-		font-size: 28rpx;
-		color: #ff6a8e;
-		margin-right: 20rpx;
-	}
-
-	.arrow {
-		font-size: 30rpx;
-		color: #ccc;
-	}
-
-	/* 底部标语 */
-	.footer {
-		margin-top: 80rpx;
-		text-align: center;
-	}
-
-	.footer-text {
-		font-size: 28rpx;
-		color: #bbb;
-	}
+.tab-item.active {
+	color: #ff6a8e;
+}
 </style>

@@ -1,11 +1,8 @@
 <template>
   <view class="page">
-    <!-- 顶部栏：返回 + 倒计时 -->
+    <!-- 顶部栏：只保留返回按钮 -->
     <view class="top-wrap">
       <view class="icon-btn" @click="goBack">🏠</view>
-      <view class="countdown" :class="{ timeWarning: remainTime <= 60 }">
-        {{ formatTime(remainTime) }}
-      </view>
     </view>
 
     <!-- 当前题号 / 总题数 -->
@@ -17,7 +14,7 @@
     <view 
       class="word-card" 
       :class="{ scaleActive: isWordPlaying }"
-      @click="playWordAudio(currentWordInfo.audio)"
+      @click="handlePlayWord"
     >
       <text class="word">{{ currentWord }}</text>
     </view>
@@ -38,19 +35,84 @@
       </view>
     </view>
 
-    <!-- 成绩弹窗 -->
-    <view class="score-mask" v-if="showScoreModal">
-      <view class="score-box">
-        <view class="score-title">测试结束</view>
-        <view class="score-info">
-          <text>得分：{{ score }} 分</text>
-          <text>答对：{{ rightNum }} / 10</text>
-          <text>用时：{{ useTime }} 秒</text>
-          <text>正确率：{{ accuracy }}%</text>
+    <!-- 底部醒目倒计时 -->
+    <view class="bottom-countdown">
+      <view class="countdown-wrapper">
+        <text class="countdown-label">剩余时间</text>
+        <view 
+          class="countdown" 
+          :class="{ 
+            timeWarning: remainTime <= 60,
+            urgentWarning: remainTime <= 30 
+          }"
+        >
+          {{ formattedTime }}
         </view>
-        <view class="btn-group">
-          <button class="btn back-btn" @click="goBack">返回</button>
-          <button class="btn reset-btn" @click="restartTest">重新测试</button>
+      </view>
+    </view>
+
+    <!-- 成绩弹窗 - 卡通版 -->
+    <view class="score-mask" v-if="showScoreModal">
+      <view class="score-box cartoon-score-box">
+        <!-- 装饰星星 -->
+        <view class="stars-decoration">
+          <text class="star star1">⭐</text>
+          <text class="star star2">🌟</text>
+          <text class="star star3">⭐</text>
+          <text class="star star4">🌟</text>
+        </view>
+        
+        <!-- 奖杯图标 -->
+        <view class="trophy-container">
+          <text class="trophy-icon">{{ getTrophyIcon }}</text>
+          <view class="trophy-glow"></view>
+        </view>
+        
+        <!-- 标题 -->
+        <view class="score-title cartoon-title">
+          {{ getScoreTitle }}
+        </view>
+        
+        <!-- 分数显示 -->
+        <view class="score-display">
+          <text class="score-number">{{ score }}</text>
+          <text class="score-unit">分</text>
+        </view>
+        
+        <!-- 成绩详情 -->
+        <view class="score-info cartoon-info">
+          <view class="info-row">
+            <text class="info-icon">✅</text>
+            <text class="info-text">答对 {{ rightNum }} / 10 题</text>
+          </view>
+          <view class="info-row">
+            <text class="info-icon">⏱️</text>
+            <text class="info-text">用时 {{ useTime }} 秒</text>
+          </view>
+          <view class="info-row">
+            <text class="info-icon">📊</text>
+            <text class="info-text">正确率 {{ accuracy }}%</text>
+          </view>
+        </view>
+        
+        <!-- 鼓励语 -->
+        <view class="encouragement">
+          <text class="encourage-text">{{ getEncouragement }}</text>
+        </view>
+        
+        <!-- 按钮组 -->
+        <view class="btn-group cartoon-btns">
+          <button class="btn back-btn cartoon-btn" @click="goBack">
+            <text class="btn-text">去学习</text>
+          </button>
+          <button class="btn reset-btn cartoon-btn" @click="restartTest">
+            <text class="btn-text">再来一次</text>
+          </button>
+        </view>
+        
+        <!-- 底部装饰 -->
+        <view class="bottom-decoration">
+          <text class="deco-text">🎉 继续加油哦！ 🎉</text>
         </view>
       </view>
     </view>
@@ -69,9 +131,9 @@ export default {
       testList: [],
       currentIndex: 0,
       currentWord: "",
-      currentWordInfo: null, // 当前题目完整信息，用于存错题
+      currentWordInfo: null,
       options: [],
-      totalTime: 600, // 10分钟 = 600秒
+      totalTime: 600,
       remainTime: 600,
       timer: null,
       rightNum: 0,
@@ -80,10 +142,56 @@ export default {
       showScoreModal: false,
       useTime: 0,
       accuracy: 0,
-      // 单词朗读状态 & 音频实例
       isWordPlaying: false,
       wordAudio: null
     };
+  },
+  computed: {
+    // 格式化时间
+    formattedTime() {
+      const sec = this.remainTime;
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    },
+    
+    // 根据分数返回不同的奖杯图标
+    getTrophyIcon() {
+      if (this.score >= 90) return '🏆';
+      if (this.score >= 70) return '🥇';
+      if (this.score >= 60) return '🥈';
+      return '🥉';
+    },
+    
+    // 根据分数返回不同的标题
+    getScoreTitle() {
+      if (this.score === 100) return '完美满分！太棒啦！';
+      if (this.score >= 90) return '超级厉害！';
+      if (this.score >= 80) return '表现很棒！';
+      if (this.score >= 60) return '不错哦！';
+      return '继续加油！';
+    },
+    
+    // 根据分数返回鼓励语
+    getEncouragement() {
+      const encouragements = [
+        "你是最棒的！继续发光吧！✨",
+        "每天进步一点点，你会更出色！💪",
+        "学习就像搭积木，越搭越高哦！🧩",
+        "你的努力，时间都看得见！⏰",
+        "保持这份热情，未来可期！🌈",
+        "小小学霸就是你！🤓",
+        "英语小达人正在养成中！🚀"
+      ];
+      
+      if (this.score >= 90) {
+        return encouragements[Math.floor(Math.random() * 3)];
+      } else if (this.score >= 60) {
+        return encouragements[Math.floor(Math.random() * 3) + 2];
+      } else {
+        return "别灰心，下次一定会更好！💖";
+      }
+    }
   },
   onLoad() {
     this.initTest();
@@ -93,19 +201,9 @@ export default {
       clearInterval(this.timer);
       this.timer = null;
     }
-    // 页面销毁，停止并释放音频
     this.destroyWordAudio();
   },
   methods: {
-    // 秒数格式化 分:秒
-    formatTime(sec) {
-      let m = Math.floor(sec / 60);
-      let s = sec % 60;
-      m = m.toString().padStart(2, '0');
-      s = s.toString().padStart(2, '0');
-      return `${m}:${s}`;
-    },
-
     // 初始化测试
     initTest() {
       this.currentIndex = 0;
@@ -148,9 +246,7 @@ export default {
       this.currentWordInfo = curr;
       this.currentWord = curr.word;
       this.genOptions(curr);
-
-      // 加载题目后自动朗读单词
-      this.playWordAudio(curr.audio);
+      this.handlePlayWord();
     },
 
     // 销毁单词音频
@@ -163,23 +259,19 @@ export default {
       this.isWordPlaying = false;
     },
 
-    // 播放单词音频 + 控制卡片放大状态
-    playWordAudio(audioSrc) {
-      if (!audioSrc) return;
-      // 重复点击会终止当前播放，重新朗读
+    // 播放单词音频
+    handlePlayWord() {
+      if (!this.currentWordInfo?.audio) return;
       this.destroyWordAudio();
-      // 开启放大样式
       this.isWordPlaying = true;
 
       this.wordAudio = uni.createInnerAudioContext();
-      this.wordAudio.src = audioSrc;
+      this.wordAudio.src = this.currentWordInfo.audio;
       this.wordAudio.play();
 
-      // 朗读结束，恢复原大小
       this.wordAudio.onEnded(() => {
         this.destroyWordAudio();
       });
-      // 播放异常，也恢复样式
       this.wordAudio.onError(() => {
         this.destroyWordAudio();
       });
@@ -209,21 +301,17 @@ export default {
 
     // 选择答案
     selectAnswer(item) {
-      // 防止重复点击
       if (this.options.some(opt => opt.isSelected)) return;
 
-      // 标记选中
       this.options.forEach(opt => opt.isSelected = false);
       item.isSelected = true;
 
-      // 答错 → 存入本地缓存（去重）
       if (!item.correct) {
         this.saveErrorWord(this.currentWordInfo);
       } else {
         this.rightNum++;
       }
 
-      // 延迟切换下一题
       setTimeout(() => {
         if (this.currentIndex >= 9) {
           this.calcScore();
@@ -234,11 +322,9 @@ export default {
       }, 400);
     },
 
-    // 保存错题到本地缓存（去重）
+    // 保存错题
     saveErrorWord(wordItem) {
-      // 读取已有错题
       let errorList = uni.getStorageSync(ERROR_WORD_KEY) || [];
-      // 根据单词唯一标识去重
       const hasExist = errorList.some(item => item.word === wordItem.word);
       if (!hasExist) {
         errorList.push(wordItem);
@@ -266,7 +352,7 @@ export default {
       this.initTest();
     },
 
-    // 返回首页（适配分包路由）
+    // 返回首页
     goBack() {
       uni.redirectTo({
         url: "/pages/sub-english/kidsEnglish"
@@ -283,6 +369,7 @@ page {
 .page {
   padding: 30rpx;
   padding-top: 120rpx;
+  padding-bottom: 200rpx;
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -294,7 +381,7 @@ page {
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 0 30rpx;
   z-index: 10;
@@ -310,17 +397,69 @@ page {
   justify-content: center;
   font-size: 36rpx;
 }
-.countdown {
-  font-size: 32rpx;
-  color: #333;
-  background: #fff;
-  padding: 10rpx 20rpx;
-  border-radius: 20rpx;
-  box-shadow: 0 3rpx 9rpx rgba(0, 0, 0, 0.1);
+
+/* 底部醒目倒计时 */
+.bottom-countdown {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
+  backdrop-filter: blur(10px);
+  padding: 30rpx 0;
+  z-index: 100;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
 }
-/* 剩余1分钟倒计时变红警告 */
+
+.countdown-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+  font-weight: 500;
+}
+
+.countdown {
+  font-size: 56rpx;
+  font-weight: bold;
+  color: #333;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20rpx 50rpx;
+  border-radius: 60rpx;
+  box-shadow: 0 8rpx 25rpx rgba(102, 126, 234, 0.3);
+  color: white;
+  letter-spacing: 4rpx;
+  transition: all 0.3s ease;
+}
+
 .timeWarning {
-  color: #ff4d6d;
+  background: linear-gradient(135deg, #ff6a8e 0%, #ff4d6d 100%);
+  box-shadow: 0 8rpx 25rpx rgba(255, 77, 109, 0.4);
+  animation: pulse 1s infinite;
+}
+
+.urgentWarning {
+  background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+  box-shadow: 0 8rpx 25rpx rgba(255, 71, 87, 0.5);
+  animation: blink 0.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 /* 题号提示 */
@@ -339,13 +478,10 @@ page {
   text-align: center;
   margin: 30rpx 30rpx 60rpx;
   box-shadow: 0 10rpx 30rpx rgba(255, 140, 180, 0.15);
-  /* 过渡动画 */
   transition: all 0.3s ease;
   transform: scale(1);
-  /* 增加点击光标样式，提示可点击 */
   cursor: pointer;
 }
-/* 朗读中放大样式 */
 .word-card.scaleActive {
   transform: scale(1.08);
   box-shadow: 0 12rpx 36rpx rgba(255, 110, 150, 0.25);
@@ -393,7 +529,7 @@ page {
   background: #ffe1e1;
 }
 
-/* 成绩弹窗遮罩 */
+/* ==================== 卡通弹窗样式 ==================== */
 .score-mask {
   position: fixed;
   top: 0;
@@ -406,40 +542,235 @@ page {
   justify-content: center;
   z-index: 999;
 }
-.score-box {
-  width: 80%;
-  background: #fff;
-  border-radius: 30rpx;
-  padding: 40rpx;
+
+/* 卡通弹窗容器 */
+.cartoon-score-box {
+  width: 85%;
+  background: linear-gradient(145deg, #fff9e6, #fff0f5);
+  border-radius: 50rpx;
+  padding: 50rpx 40rpx;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 20rpx 60rpx rgba(255, 182, 193, 0.4),
+    inset 0 -10rpx 30rpx rgba(255, 255, 255, 0.5);
+  border: 8rpx solid #ffb6c1;
+  animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
-.score-title {
-  text-align: center;
+
+/* 弹窗动画 */
+@keyframes popIn {
+  0% {
+    transform: scale(0.5) rotate(-10deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.05) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* 星星装饰 */
+.stars-decoration {
+  position: absolute;
+  top: 20rpx;
+  left: 0;
+  right: 0;
+  height: 80rpx;
+}
+
+.star {
+  position: absolute;
   font-size: 40rpx;
-  font-weight: bold;
-  color: #ff6a8e;
-  margin-bottom: 30rpx;
+  animation: twinkle 1.5s infinite alternate;
 }
-.score-info {
-  font-size: 32rpx;
-  color: #333;
-  line-height: 60rpx;
-  margin-bottom: 40rpx;
+
+.star1 { left: 40rpx; top: 10rpx; animation-delay: 0s; }
+.star2 { right: 60rpx; top: 0; animation-delay: 0.3s; }
+.star3 { left: 120rpx; top: 40rpx; animation-delay: 0.6s; }
+.star4 { right: 100rpx; top: 30rpx; animation-delay: 0.9s; }
+
+@keyframes twinkle {
+  0% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+  100% { transform: scale(1.3) rotate(20deg); opacity: 1; }
 }
-.btn-group {
+
+/* 奖杯容器 */
+.trophy-container {
+  position: relative;
+  margin: 20rpx auto 30rpx;
+  width: 160rpx;
+  height: 160rpx;
   display: flex;
-  gap: 20rpx;
+  align-items: center;
+  justify-content: center;
 }
-.btn {
-  flex: 1;
-  font-size: 30rpx;
+
+.trophy-icon {
+  font-size: 120rpx;
+  z-index: 2;
+  position: relative;
+  filter: drop-shadow(0 10rpx 20rpx rgba(255, 215, 0, 0.4));
+  animation: bounce 1s infinite alternate;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-10rpx) scale(1.05); }
+}
+
+.trophy-glow {
+  position: absolute;
+  width: 180rpx;
+  height: 180rpx;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.2); opacity: 0.8; }
+}
+
+/* 标题 */
+.cartoon-title {
+  text-align: center;
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #ff6b8a;
+  margin-bottom: 20rpx;
+  text-shadow: 2rpx 2rpx 0 #fff;
+  letter-spacing: 4rpx;
+}
+
+/* 分数显示 */
+.score-display {
+  text-align: center;
+  margin: 20rpx 0 40rpx;
+  padding: 20rpx;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  border-radius: 30rpx;
+  border: 6rpx dashed #ff9a9e;
+}
+
+.score-number {
+  font-size: 96rpx;
+  font-weight: bold;
+  color: #ff6b6b;
+  text-shadow: 3rpx 3rpx 0 #fff;
+  font-family: 'Comic Sans MS', cursive;
+}
+
+.score-unit {
+  font-size: 36rpx;
+  color: #ff8e8e;
+  margin-left: 10rpx;
+}
+
+/* 成绩详情 */
+.cartoon-info {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 25rpx;
+  padding: 25rpx;
+  margin-bottom: 30rpx;
+  border: 4rpx solid #ffccd5;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin: 15rpx 0;
+  padding: 10rpx 0;
+}
+
+.info-icon {
+  font-size: 36rpx;
+  margin-right: 20rpx;
+  width: 50rpx;
+  text-align: center;
+}
+
+.info-text {
+  font-size: 32rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+/* 鼓励语 */
+.encouragement {
+  text-align: center;
+  margin: 20rpx 0 30rpx;
+  padding: 15rpx;
+  background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%);
   border-radius: 20rpx;
 }
-.back-btn {
-  background: #eee;
-  color: #333;
+
+.encourage-text {
+  font-size: 34rpx;
+  color: #ff6b8a;
+  font-weight: bold;
+  font-style: italic;
 }
-.reset-btn {
-  background: #ff6a8e;
-  color: #fff;
+
+/* 卡通按钮 */
+.cartoon-btns {
+  display: flex;
+  gap: 30rpx;
+  margin-top: 20rpx;
+}
+
+.cartoon-btn {
+  flex: 1;
+  height: 90rpx;
+  border-radius: 45rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.cartoon-btn:active {
+  transform: scale(0.95);
+}
+
+.back-btn.cartoon-btn {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #666;
+}
+
+.reset-btn.cartoon-btn {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  color: white;
+}
+
+.btn-icon {
+  font-size: 36rpx;
+  margin-right: 10rpx;
+}
+
+.btn-text {
+  font-size: 30rpx;
+}
+
+/* 底部装饰 */
+.bottom-decoration {
+  text-align: center;
+  margin-top: 30rpx;
+  padding-top: 20rpx;
+  border-top: 4rpx dotted #ffccd5;
+}
+
+.deco-text {
+  font-size: 28rpx;
+  color: #ff8e8e;
+  font-weight: bold;
 }
 </style>

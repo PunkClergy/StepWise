@@ -5,9 +5,6 @@
 			<view class="icon-btn left-icon" @click="goHome">
 				<text>🏠</text>
 			</view>
-			<view class="icon-btn right-icon" @click="goErrorBook">
-				<text>📖</text>
-			</view>
 		</view>
 
 		<view class="question-box">

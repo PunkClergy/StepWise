@@ -1,18 +1,16 @@
 {
-	"pages": [
-		{
-			"path": "pages/index/index",
-			"style": {
-				"navigationBarBackgroundColor": "#fff9e6",
-				"navigationBarTitleText": "幼儿快乐学堂"
-			}
+	"pages": [{
+		"path": "pages/index/index",
+		"style": {
+			"navigationBarBackgroundColor": "#fff9e6",
+			"navigationBarTitleText": "幼儿快乐学堂",
+			"enablePullDownRefresh": false,
+			"disableScroll": true
 		}
-	],
-	"subPackages": [
-		{
+	}],
+	"subPackages": [{
 			"root": "pages/sub-math",
-			"pages": [
-				{
+			"pages": [{
 					"path": "mathConfig",
 					"style": {
 						"navigationBarBackgroundColor": "#fff9e6",
@@ -37,8 +35,7 @@
 		},
 		{
 			"root": "pages/sub-english",
-			"pages": [
-				{
+			"pages": [{
 					"path": "kidsEnglish",
 					"style": {
 						"navigationBarBackgroundColor": "#fff9e6",
@@ -63,8 +60,7 @@
 		},
 		{
 			"root": "pages/sub-user",
-			"pages": [
-				{
+			"pages": [{
 					"path": "MyCenter",
 					"style": {
 						"navigationBarBackgroundColor": "#fff9e6",
@@ -78,7 +74,28 @@
 					}
 				}
 			]
+		},
+		{
+			"root": "pages/sub-chinese",
+			"pages": [{
+				"path": "errorBook",
+				"style": {
+					"navigationBarBackgroundColor": "#fff9e6",
+					"navigationBarTitleText": "我的错题本"
+				}
+			}]
+		},
+		{
+			"root": "pages/sub-pinyin",
+			"pages": [{
+				"path": "errorBook",
+				"style": {
+					"navigationBarBackgroundColor": "#fff9e6",
+					"navigationBarTitleText": "我的错题本"
+				}
+			}]
 		}
+
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
