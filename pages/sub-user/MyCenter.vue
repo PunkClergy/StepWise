@@ -52,8 +52,13 @@
 			</view>
 		</view>
 
-		<!-- 其他功能 -->
+		<!-- 其他功能（新增：家长中心） -->
 		<view class="func-list" style="margin-top: 20rpx;">
+			<view class="func-item" @click="openPwdPopup">
+				<view class="func-icon">👨‍👩‍👧</view>
+				<text class="func-name">家长中心</text>
+				<view class="arrow">➡️</view>
+			</view>
 			<view class="func-item" @click="goSetting">
 				<view class="func-icon">⚙️</view>
 				<text class="func-name">设置</text>
@@ -77,6 +82,21 @@
 				<text class="tab-text">我的</text>
 			</view>
 		</view>
+
+		<!-- 卡通风格密码弹窗 -->
+		<view class="pwd-mask" v-if="showPwdMask">
+			<view class="pwd-popup">
+				<view class="popup-top">
+					<text class="lock-icon">🔒</text>
+					<text class="popup-title">请输入家长密码</text>
+				</view>
+				<input class="pwd-input" v-model="inputPwd" type="password" placeholder="请输入密码" />
+				<view class="popup-btn-group">
+					<view class="btn cancel-btn" @click="closePwdPopup">取消</view>
+					<view class="btn confirm-btn" @click="checkPassword">确认</view>
+				</view>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -97,6 +117,8 @@
 
 	// 星星本地存储key
 	const STAR_STORAGE_KEY = 'user_star_num';
+	// 自定义家长密码（可自行修改）
+	const PARENT_PASSWORD = '811762';
 
 	export default {
 		data() {
@@ -108,7 +130,11 @@
 				mathErrorCount: 0,
 				charErrorCount: 0,
 				sentenceErrorCount: 0,
-				starNum: 0 // 星星数量
+				starNum: 0, // 星星数量
+
+				// 密码弹窗相关
+				showPwdMask: false,
+				inputPwd: ''
 			};
 		},
 		onLoad() {
@@ -166,6 +192,34 @@
 					uni.reLaunch({
 						url: '/pages/index/index'
 					});
+				}
+			},
+
+			// 打开密码弹窗
+			openPwdPopup() {
+				this.showPwdMask = true;
+				this.inputPwd = '';
+			},
+			// 关闭密码弹窗
+			closePwdPopup() {
+				this.showPwdMask = false;
+				this.inputPwd = '';
+			},
+			// 校验密码
+			checkPassword() {
+				if (!this.inputPwd) {
+					uni.showToast({ title: '请输入密码', icon: 'none' });
+					return;
+				}
+				if (this.inputPwd === PARENT_PASSWORD) {
+					// 密码正确，跳转家长中心
+					this.closePwdPopup();
+					uni.navigateTo({
+						url: '/pages/sub-user/parent'
+					});
+				} else {
+					uni.showToast({ title: '密码错误', icon: 'none' });
+					this.inputPwd = '';
 				}
 			}
 		}
@@ -252,9 +306,7 @@
 	.star-icon {
 		font-size: 50rpx;
 		color: #ffca3e;
-		/* 合并动画，以自身中心点变换，不偏移 */
 		animation: starAni 1s infinite alternate ease-in-out;
-		/* 变换中心点设为中心，防止缩放错位 */
 		transform-origin: center center;
 	}
 
@@ -266,13 +318,11 @@
 		margin-top: 10rpx;
 	}
 
-	/* 合并跳动+闪烁缩放动画，基于中心点变化，不偏移 */
 	@keyframes starAni {
 		0% {
 			transform: translateY(0) scale(1);
 			opacity: 0.8;
 		}
-
 		100% {
 			transform: translateY(-6rpx) scale(1.1);
 			opacity: 1;
@@ -370,5 +420,93 @@
 
 	.tab-item.active {
 		color: #56a071;
+	}
+
+	/* ========== 卡通密码弹窗样式 ========== */
+	.pwd-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.45);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 9999;
+	}
+
+	.pwd-popup {
+		width: 80%;
+		max-width: 520rpx;
+		background: #fff;
+		border-radius: 36rpx;
+		/* 卡通圆角+阴影+轻微上浮动画 */
+		box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+		padding: 50rpx 40rpx;
+		animation: popupShow 0.3s ease;
+	}
+
+	@keyframes popupShow {
+		0% {
+			transform: scale(0.85);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
+
+	.popup-top {
+		text-align: center;
+		margin-bottom: 40rpx;
+	}
+
+	.lock-icon {
+		font-size: 70rpx;
+		display: block;
+		margin-bottom: 20rpx;
+		color: #ffb84d;
+	}
+
+	.popup-title {
+		font-size: 36rpx;
+		color: #333;
+		font-weight: bold;
+	}
+
+	.pwd-input {
+		height: 88rpx;
+		line-height: 88rpx;
+		background: #f7f8fa;
+		border-radius: 16rpx;
+		padding: 0 24rpx;
+		font-size: 32rpx;
+		margin-bottom: 40rpx;
+	}
+
+	.popup-btn-group {
+		display: flex;
+		gap: 24rpx;
+	}
+
+	.btn {
+		flex: 1;
+		height: 84rpx;
+		line-height: 84rpx;
+		text-align: center;
+		border-radius: 42rpx;
+		font-size: 32rpx;
+	}
+
+	.cancel-btn {
+		background: #f0f2f5;
+		color: #666;
+	}
+
+	.confirm-btn {
+		background: linear-gradient(90deg, #87b99c, #56a071);
+		color: #fff;
 	}
 </style>

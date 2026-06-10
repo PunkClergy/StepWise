@@ -72,6 +72,12 @@
 					"style": {
 						"navigationBarTitleText": ""
 					}
+				},
+				{
+					"path": "parent",
+					"style": {
+						"navigationBarTitleText": ""
+					}
 				}
 			]
 		},

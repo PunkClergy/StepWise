@@ -11,7 +11,7 @@
 			<text class="question-text">{{ question }}</text>
 			<!-- 放大我的答案 -->
 			<view class="user-answer">
-				📝️：<text class="ans-num">{{ selectNumVal || "--" }}</text>
+				📝：<text class="ans-num">{{ selectNumVal || "--" }}</text>
 			</view>
 		</view>
 
@@ -69,6 +69,7 @@
 				isClickLock: false, // 答题按钮锁：true=锁定禁止重复提交
 				rateText: "0%", // 正确率展示文本
 				errorQuestions: [], // 错题数组，存储答错题目信息用于错题本
+				starNum: 0, // 星星数量
 
 				// 阶段配置常量：配置触发升级弹窗的答题数量与正确率阈值，Object.freeze冻结不可修改
 				config: Object.freeze({
@@ -180,6 +181,9 @@
 		 * @param {Object} options 页面跳转携带参数，可接收maxNum难度参数
 		 */
 		onLoad(options) {
+			// 读取星星缓存
+			this.starNum = Number(uni.getStorageSync('user_star_num')) || 0;
+
 			this.loadStatsFromStorage(); // 读取本地缓存统计数据（总题、答对题、弹窗记录）
 			this.loadErrorQuestionsFromStorage(); // 读取本地缓存错题列表
 
@@ -466,7 +470,12 @@
 
 				// 统计数据自增
 				this.totalCount++;
-				userAns === this.rightAnswer && this.rightCount++;
+				if (userAns === this.rightAnswer) {
+					this.rightCount++;
+					// 答对：星星 +1 并写入缓存
+					this.starNum += 1;
+					uni.setStorageSync('user_star_num', this.starNum);
+				}
 
 				this.calcRate(); // 刷新正确率
 				this.saveStatsToStorage(); // 保存统计到本地
@@ -740,7 +749,7 @@
 
 	.right-tip-content {
 		padding: 30rpx 60rpx;
-		background: rgba86, 160, 113, 0.85);
+		background: rgba(86, 160, 113, 0.85);
 		color: #fff;
 		font-size: 36rpx;
 		border-radius: 20rpx;
