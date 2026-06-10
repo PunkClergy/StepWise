@@ -100,7 +100,7 @@
 					// 异常兜底：超时强制解锁
 					this.timer = setTimeout(() => {
 						this.isReading = false
-					}, 4000)
+					}, 7000)
 				}, 1000)
 			},
 
